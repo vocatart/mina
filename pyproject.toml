@@ -1,0 +1,31 @@
+[project]
+name = "mina"
+version = "0.0.1"
+description = "Mel Inter-phoneme Neural Alignment"
+requires-python = ">=3.13"
+dependencies = [
+    "librosa>=0.11.0",
+    "torch>=2.10.0",
+    "numpy>=2.3.5",
+    "textgrid>=1.6.1",
+    "tqdm>=4.67.3",
+    "lightning>=2.6.1",
+    "matplotlib>=3.10.8",
+    "tensorboard>=2.20.0",
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", marker = "sys_platform != 'win32'" },
+  { index = "pytorch-cu130", marker = "sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
