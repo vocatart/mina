@@ -12,6 +12,7 @@ dependencies = [
     "lightning>=2.6.1",
     "matplotlib>=3.10.8",
     "tensorboard>=2.20.0",
+    "xformers>=0.0.35",
 ]
 
 [tool.uv.sources]
