@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from positional_encoding import SinusoidalPositionalEncoding
+from mina.positional_encoding import SinusoidalPositionalEncoding
 
 class BoundaryDetector(nn.Module):
     """Encoder-only Transformer Boundary Detector"""
