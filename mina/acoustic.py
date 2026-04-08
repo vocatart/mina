@@ -38,7 +38,7 @@ class ConvolutionalAcousticEncoder(nn.Module):
 
         self.conv_block = nn.Sequential()
         for i in range(num_conv_layers):
-            self.conv_blocks.append(MelConvBlock(latent_dim, kernel_size, dropout))
+            self.conv_block.append(MelConvBlock(latent_dim, kernel_size, dropout))
 
         self.output = nn.Linear(latent_dim, hidden_dim)
 
