@@ -39,7 +39,9 @@ if __name__ == '__main__':
         help="Type of positional encoding"
     )
 
-    parser.add_argument("--lr", type=float, default=5e-4)
+    parser.add_argument("--lr_muon", type=float, default=5e-4)
+    parser.add_argument("--lr_adam", type=float, default=5e-4)
+    parser.add_argument("--weight_decay", type=float, default=0.01)
     parser.add_argument("--num_epochs", type=int, default=1000)
     parser.add_argument("--pos_weight", type=float, default=5.0)
     parser.add_argument("--warmup_steps", type=int, default=500)
@@ -60,7 +62,9 @@ if __name__ == '__main__':
         kernel_size=args.kernel_size,
         dropout_conv=args.conv_dropout,
         dropout_tf=args.transformer_dropout,
-        lr=args.lr,
+        muon_lr=args.lr_muon,
+        adam_lr=args.lr_adam,
+        weight_decay=args.weight_decay,
         pos_weight=args.pos_weight,
         max_len=data_module.rec_max_len,
         sr=data_module.sr,

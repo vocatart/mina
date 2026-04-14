@@ -913,6 +913,7 @@ dependencies = [
     { name = "librosa" },
     { name = "lightning" },
     { name = "matplotlib" },
+    { name = "muon-optimizer" },
     { name = "numpy" },
     { name = "optuna" },
     { name = "tempdir" },
@@ -930,6 +931,7 @@ requires-dist = [
     { name = "librosa", specifier = ">=0.11.0" },
     { name = "lightning", specifier = ">=2.6.1" },
     { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "muon-optimizer", git = "https://github.com/KellerJordan/Muon" },
     { name = "numpy", specifier = ">=2.4.4" },
     { name = "optuna", specifier = ">=4.8.0" },
     { name = "tempdir", specifier = ">=0.7.1" },
@@ -1065,6 +1067,11 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/4c/81/4629d0aa32302ef7b2ec65c75a728cc5ff4fa410c50096174c1632e70b3e/multidict-6.7.1-cp314-cp314t-win_arm64.whl", hash = "sha256:2bbd113e0d4af5db41d5ebfe9ccaff89de2120578164f86a5d17d5a576d1e5b2", size = 44719, upload-time = "2026-01-26T02:46:11.146Z" },
     { url = "https://files.pythonhosted.org/packages/81/08/7036c080d7117f28a4af526d794aab6a84463126db031b007717c1a6676e/multidict-6.7.1-py3-none-any.whl", hash = "sha256:55d97cc6dae627efa6a6e548885712d4864b81110ac76fa4e534c03819fa4a56", size = 12319, upload-time = "2026-01-26T02:46:44.004Z" },
 ]
+
+[[package]]
+name = "muon-optimizer"
+version = "0.1.0"
+source = { git = "https://github.com/KellerJordan/Muon#6399c658d3c4a3356ba823fa6664b10e23871068" }
 
 [[package]]
 name = "networkx"

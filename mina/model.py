@@ -1,6 +1,7 @@
 import lightning
 import numpy as np
 import torch
+from muon import SingleDeviceMuonWithAuxAdam
 from torch import nn
 
 from mina.acoustic import ConvolutionalAcousticEncoder
@@ -15,7 +16,8 @@ from mina.positional_encoding import PositionalEncodingType
 class MINA(lightning.LightningModule):
     def __init__(self, d_mel, d_l, d_h, conv_layers,
         num_heads, tf_layers, tf_dim_ff, dropout_conv, dropout_tf, kernel_size,
-        max_len, sr, hop_length, lr, pos_weight, boundary_threshold, pe_type: PositionalEncodingType):
+        max_len, sr, hop_length, muon_lr, adam_lr, pos_weight, boundary_threshold,
+        pe_type: PositionalEncodingType, weight_decay):
         super().__init__()
         self.save_hyperparameters(ignore=["sr", "hop_length"])
 
@@ -122,8 +124,21 @@ class MINA(lightning.LightningModule):
         self.log("test/f1", f1)
 
     def configure_optimizers(self):
-        # TODO: swap for Muon
-        optimizer = torch.optim.AdamW(self.parameters(), lr=self.hparams.lr, weight_decay=1e-2)
+        hidden_modules = [self.acoustic, self.detector.transformer]
+        hidden_weights = [p for m in hidden_modules for p in m.parameters() if p.ndim >= 2]
+        hidden_gains_biases = [p for m in hidden_modules for p in m.parameters() if p.ndim < 2]
+
+        nonhidden_params = [
+            *self.detector.output.parameters(),
+            *self.detector.positional_encoding.parameters(),
+        ]
+
+        param_groups = [
+            dict(params=hidden_weights, use_muon=True, lr=float(self.hparams.muon_lr), weight_decay=float(self.hparams.weight_decay)),
+            dict(params=hidden_gains_biases + nonhidden_params, use_muon=False,
+                 lr=float(self.hparams.adam_lr), betas=(0.9, 0.95), weight_decay=float(self.hparams.weight_decay)),
+        ]
+        optimizer = SingleDeviceMuonWithAuxAdam(param_groups)
 
         plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, mode='min', factor=0.5, patience=5
