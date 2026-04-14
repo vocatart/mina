@@ -23,7 +23,9 @@ class BoundaryDetector(nn.Module):
         # TODO: for some reason pytorch makes it so you have to MANUALLY INITIALIZE ALL LAYERS???
         # I've done this before in other work, I just need to port it over
 
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer, num_layers, enable_nested_tensor=False
+        )
         self.output = nn.Linear(hidden_dim, 1)
 
     def forward(self, x, padding_mask=None):
