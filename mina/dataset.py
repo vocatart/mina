@@ -116,9 +116,9 @@ class MinaDataModule(lightning.LightningDataModule):
             self.val,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=self.n_workers,
+            num_workers=0,
             collate_fn=MinaDataset.collate_fn,
-            persistent_workers=self.persist,
+            persistent_workers=False,
         )
 
     def test_dataloader(self):
@@ -126,7 +126,7 @@ class MinaDataModule(lightning.LightningDataModule):
             self.test,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=self.n_workers,
+            num_workers=0,
             collate_fn=MinaDataset.collate_fn,
-            persistent_workers=self.persist,
+            persistent_workers=False,
         )
