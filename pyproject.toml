@@ -16,6 +16,9 @@ dependencies = [
     "optuna>=4.8.0",
     "tempdir>=0.7.1",
     "muon-optimizer",
+    "optuna-integration[pytorch-lightning]>=4.8.0",
+    "optuna-dashboard>=0.20.0",
+    "pytest>=9.0.3",
 ]
 
 [tool.uv.sources]
