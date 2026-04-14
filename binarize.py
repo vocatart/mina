@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import json
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -21,6 +22,7 @@ class Preprocessor:
         self.hop_length = a.hop_length
         self.n_fft = a.n_fft
 
+        self.valid_split = a.val_split
         self.time_split = a.time_split
         self.audio_types = a.audio_types
         self.workers = a.workers
@@ -136,20 +138,40 @@ class Preprocessor:
     def get_boundaries_and_phonemes(self, tg: textgrid.TextGrid, seq_len: int, offset: float):
         tier = tg.tiers[0]
         boundaries = np.zeros(seq_len, dtype=np.int64)
-        phonemes = np.zeros(len(tier), dtype=np.int64)
+        phonemes = np.zeros(seq_len, dtype=np.int64)
 
-        current_interval = 0
         for interval in tier.intervals:
-            # offset frame idx of where intervals are
-            frame_idx = int((interval.minTime - offset) * self.sr / self.hop_length)
+            start_idx = int((interval.minTime - offset) * self.sr / self.hop_length)
+            end_idx = int((interval.maxTime - offset) * self.sr / self.hop_length)
 
-            if 0 <= frame_idx < len(boundaries):
-                boundaries[frame_idx] = 1
+            start_idx = max(0, min(seq_len, start_idx))
+            end_idx = max(0, min(seq_len, end_idx))
 
-            phonemes[current_interval] = self.phoneme_map.index(interval.mark)
-            current_interval += 1
+            if 0 <= start_idx < seq_len:
+                boundaries[start_idx] = 1
+
+            if start_idx < end_idx:
+                phoneme_id = self.phoneme_map.index(interval.mark)
+                phonemes[start_idx:end_idx + 1] = phoneme_id
 
         return boundaries, phonemes
+
+    def save_metadata(self):
+        phone_dict = {index: phone for index, phone in enumerate(self.phoneme_map)}
+
+        json_dict = {
+            "phoneme_map": phone_dict,
+            "hparams": {
+                "sr": self.sr,
+                "mels": self.mels,
+                "n_fft": self.n_fft,
+                "hop_length": self.hop_length,
+                "valid_split": self.valid_split,
+                "max_len": self.longest_seen_sequence
+            }
+        }
+
+        json.dump(json_dict, open(os.path.join(self.out, "meta.json"), "w"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -162,12 +184,14 @@ if __name__ == "__main__":
     parser.add_argument("--n_fft", type=int, default=1024, help="FFT length")
 
     parser.add_argument("--time_split", type=int, default=10, help="Audio segment length")
+    parser.add_argument("--val_split", type=float, default=0.1, help="Validation split")
     parser.add_argument("--audio_types", nargs="+", type=str, help="Audio types to look for")
     parser.add_argument("--workers", type=int, default=16, help="Number of workers")
 
     proc = Preprocessor(parser.parse_args())
 
     proc.process_audio()
+    proc.save_metadata()
 
     print(f"Recommended positional encoding length: {proc.longest_seen_sequence}")
     print(f"Total dataset length: {str(datetime.timedelta(seconds=proc.total_length))}")
