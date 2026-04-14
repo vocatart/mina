@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from muon import SingleDeviceMuonWithAuxAdam
 from torch import nn
+from torch.optim.lr_scheduler import LinearLR, SequentialLR, ReduceLROnPlateau
 
 from mina.acoustic import ConvolutionalAcousticEncoder
 from mina.boundary import BoundaryDetector
@@ -17,7 +18,7 @@ class MINA(lightning.LightningModule):
     def __init__(self, d_mel, d_l, d_h, conv_layers,
         num_heads, tf_layers, tf_dim_ff, dropout_conv, dropout_tf, kernel_size,
         max_len, sr, hop_length, muon_lr, adam_lr, pos_weight, boundary_threshold,
-        pe_type: PositionalEncodingType, weight_decay):
+        pe_type: PositionalEncodingType, weight_decay, warmup_steps):
         super().__init__()
         self.save_hyperparameters(ignore=["sr", "hop_length"])
 
@@ -140,17 +141,35 @@ class MINA(lightning.LightningModule):
         ]
         optimizer = SingleDeviceMuonWithAuxAdam(param_groups)
 
-        plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode='min', factor=0.5, patience=5
+        def lr_lambda(step):
+            if step < self.hparams.warmup_steps:
+                return float(step) / float(max(1, self.hparams.warmup_steps))
+            return 1.0
+
+        warmup_scheduler = torch.optim.lr_scheduler.LambdaLR(
+            optimizer, lr_lambda
+        )
+
+        plateau_scheduler = ReduceLROnPlateau(
+            optimizer,
+            mode='min',
+            factor=0.5,
+            patience=5
         )
 
         return {
             "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": plateau_scheduler,
-                "monitor": "val/loss",
-                "interval": "epoch",
-            },
+            "lr_schedulers": [
+                {
+                    "scheduler": warmup_scheduler,
+                    "interval": "step",
+                },
+                {
+                    "scheduler": plateau_scheduler,
+                    "monitor": "val/loss",
+                    "interval": "epoch",
+                },
+            ],
         }
 
     def _log_boundary_visualization(self, mel_spec, gt_boundaries, pred_probs, i):
