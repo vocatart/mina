@@ -9,16 +9,18 @@ from mina.boundary import BoundaryDetector
 import matplotlib
 import matplotlib.pyplot as plt
 
+from mina.positional_encoding import PositionalEncodingType
+
 
 class MINA(lightning.LightningModule):
     def __init__(self, d_mel, d_l, d_h, conv_layers,
-        num_heads, tf_layers, tf_dim_ff, dropout, kernel_size,
-        max_len, sr, hop_length, lr, pos_weight, boundary_threshold):
+        num_heads, tf_layers, tf_dim_ff, dropout_conv, dropout_tf, kernel_size,
+        max_len, sr, hop_length, lr, pos_weight, boundary_threshold, pe_type: PositionalEncodingType):
         super().__init__()
         self.save_hyperparameters(ignore=["sr", "hop_length"])
 
-        self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout)
-        self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout, max_len)
+        self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv)
+        self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
         # TODO self.classifier = PhonemeClassifier(whatever)
 
         # for plottage

@@ -1,14 +1,15 @@
 import torch
 from torch import nn
-from mina.positional_encoding import SinusoidalPositionalEncoding
+from mina.positional_encoding import PositionalEncoding
+
 
 class BoundaryDetector(nn.Module):
     """Encoder-only Transformer Boundary Detector"""
-    def __init__(self, hidden_dim, num_heads, num_layers, feedforward_dim, dropout, max_len):
+    def __init__(self, hidden_dim, num_heads, num_layers, feedforward_dim, dropout, max_len, pe_type):
         super().__init__()
 
         # TODO: test the other ones? Rotary will probably work best here
-        self.positional_encoding = SinusoidalPositionalEncoding(hidden_dim, dropout, max_len)
+        self.positional_encoding = PositionalEncoding(hidden_dim, max_len, dropout, pe_type)
 
         # right now i just need this model to WORK so im using the unoptimized pytorch stuff
         # TODO: swap this part out for something that is more memory efficient (xformers blocks?)

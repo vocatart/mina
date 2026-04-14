@@ -13,6 +13,8 @@ dependencies = [
     "matplotlib>=3.10.8",
     "tensorboard>=2.20.0",
     "xformers>=0.0.35",
+    "optuna>=4.8.0",
+    "tempdir>=0.7.1",
 ]
 
 [tool.uv.sources]

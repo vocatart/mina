@@ -9,6 +9,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 
 from mina.dataset import MinaDataModule
 from mina.model import MINA
+from mina.positional_encoding import PositionalEncoding, PositionalEncodingType
 
 if __name__ == '__main__':
     torch.set_float32_matmul_precision('medium')
@@ -27,8 +28,16 @@ if __name__ == '__main__':
     parser.add_argument("--tf_layers", type=int, default=4)
     parser.add_argument("--tf_dim_ff", type=int, default=768)
     parser.add_argument("--kernel_size", type=int, default=3)
-    parser.add_argument("--dropout", type=float, default=0.1)
+    parser.add_argument("--conv_dropout", type=float, default=0.1)
+    parser.add_argument("--transformer_dropout", type=float, default=0.1)
     parser.add_argument("--thresh", type=float, default=0.5)
+    parser.add_argument(
+        "--pe_type",
+        type=PositionalEncodingType,
+        choices=list(PositionalEncodingType),
+        default=PositionalEncodingType.SINUSOIDAL,
+        help="Type of positional encoding"
+    )
 
     parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--num_epochs", type=int, default=1000)
@@ -49,13 +58,15 @@ if __name__ == '__main__':
         tf_layers=args.tf_layers,
         tf_dim_ff=args.tf_dim_ff,
         kernel_size=args.kernel_size,
-        dropout=args.dropout,
+        dropout_conv=args.conv_dropout,
+        dropout_tf=args.transformer_dropout,
         lr=args.lr,
         pos_weight=args.pos_weight,
         max_len=data_module.rec_max_len,
         sr=data_module.sr,
         hop_length=data_module.hop_length,
         boundary_threshold=args.thresh,
+        pe_type=args.pe_type
     )
     model.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
 

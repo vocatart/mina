@@ -1,6 +1,30 @@
 import torch
 import math
+
+from lightning_utilities import StrEnum
 from torch import nn
+
+class PositionalEncodingType(StrEnum):
+    SINUSOIDAL = "sinusoidal"
+    LEARNED = "learned"
+    ROPE = "rope"
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, pe_dim, max_len, dropout, pe_type: PositionalEncodingType):
+        super().__init__()
+        self.pe = None
+
+        match pe_type:
+            case "sinusoidal": self.pe = SinusoidalPositionalEncoding(pe_dim, dropout, max_len)
+            case "learned": self.pe = LearnedPositionalEncoding(pe_dim, max_len)
+            case "rope": self.pe = RotaryPositionalEncoding(pe_dim, max_len)
+            case _:
+                raise NotImplementedError
+
+    def forward(self, x):
+        return self.pe(x)
+
+
 
 class SinusoidalPositionalEncoding(nn.Module):
     """Classic sinusoidal positional encoding"""
@@ -27,12 +51,14 @@ class LearnedPositionalEncoding(nn.Module):
         self.embedding = nn.Embedding(max_len, pe_dim)
 
     def forward(self, x):
-        return x + self.embedding(torch.arange(x.size(1)).expand(x.size(0), -1))
+        positions = torch.arange(x.size(1), device=x.device).expand(x.size(0), -1)
+        return x + self.embedding(positions)
 
 class RotaryPositionalEncoding(nn.Module):
     """Rotary positional encoding (RoPE)"""
     def __init__(self, pe_dim, max_len):
         super().__init__()
+
         inv_freq = 1. / (10000 ** (torch.arange(0, pe_dim, 2).float() / pe_dim))
         inv_freq = torch.cat((inv_freq, inv_freq), dim=-1)
         position = torch.arange(max_len).float()
@@ -45,8 +71,14 @@ class RotaryPositionalEncoding(nn.Module):
         if seq_len is None:
             seq_len = x.size(1)
 
-        cos = self.cos[:seq_len].view(1, seq_len, 1, -1)
-        sin = self.sin[:seq_len].view(1, seq_len, 1, -1)
+        if seq_len > self.cos.size(0):
+            raise ValueError(
+                f"Sequence length ({seq_len}) exceeds positional encoding max_len ({self.cos.size(0)}). "
+                "Regenerate binarized data with a larger max_len or reduce sequence length."
+            )
+
+        cos = self.cos[:seq_len].unsqueeze(0).to(dtype=x.dtype)
+        sin = self.sin[:seq_len].unsqueeze(0).to(dtype=x.dtype)
 
         return (x * cos) + (self.rotate_half(x) * sin)
 
@@ -54,17 +86,3 @@ class RotaryPositionalEncoding(nn.Module):
     def rotate_half(x):
         x1, x2 = x.chunk(2, dim=-1)
         return torch.cat((-x2, x1), dim=-1)
-
-class RelativePositionalEncoding(nn.Module):
-    def __init__(self, pe_dim, max_len):
-        super().__init__()
-        self.max_len = max_len
-        self.relative_attention_bias = nn.Parameter(torch.rand(2 * max_len + 1, pe_dim))
-
-    def forward(self, length):
-        context_position = torch.arange(length, dtype=torch.long)[:, None]
-        memory_position = torch.arange(length, dtype=torch.long)[None, :]
-
-        relative_position = memory_position - context_position
-        relative_position_bucket = relative_position + self.max_len
-        return self.relative_attention_bias[relative_position_bucket]
