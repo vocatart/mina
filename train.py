@@ -70,7 +70,8 @@ if __name__ == '__main__':
         sr=data_module.sr,
         hop_length=data_module.hop_length,
         boundary_threshold=args.thresh,
-        pe_type=args.pe_type
+        pe_type=args.pe_type,
+        warmup_steps=args.warmup_steps
     )
     model.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
 
