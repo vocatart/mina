@@ -11,9 +11,11 @@ import matplotlib.pyplot as plt
 
 
 class MINA(lightning.LightningModule):
-    def __init__(self, d_mel, d_l, d_h, conv_layers, num_heads, tf_layers, tf_dim_ff, dropout, kernel_size, max_len, sr, hop_length, lr, pos_weight):
+    def __init__(self, d_mel, d_l, d_h, conv_layers,
+        num_heads, tf_layers, tf_dim_ff, dropout, kernel_size,
+        max_len, sr, hop_length, lr, pos_weight, boundary_threshold):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["sr", "hop_length"])
 
         self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout)
         self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout, max_len)
@@ -45,6 +47,13 @@ class MINA(lightning.LightningModule):
         # exclude the padding positions from the final loss computation
         return (loss * mask).sum() / mask.sum()
 
+    @staticmethod
+    def _precision_recall_f1(tp, fp, fn):
+        precision = tp / (tp + fp + 1e-8)
+        recall = tp / (tp + fn + 1e-8)
+        f1 = 2 * precision * recall / (precision + recall + 1e-8)
+        return precision, recall, f1
+
     def _step(self, batch):
         mel, bounds, lengths, phonemes = batch['mel'], batch['boundaries'], batch['lengths'], batch['phonemes']
 
@@ -55,27 +64,42 @@ class MINA(lightning.LightningModule):
         logits = self.forward(mel, padding_mask=padding_mask)
         loss = self.compute_loss(logits, bounds, valid_mask.float())
 
-        preds = (logits > 0).long()
+        probs = torch.sigmoid(logits)
+        preds = (probs >= self.hparams.boundary_threshold).long()
         acc = ((preds == bounds) & valid_mask).float().sum() / valid_mask.float().sum()
 
-        return logits, loss, acc, valid_mask
+        # tp - frames predicted as a boundary that are actually boundaries
+        # fp - frames predicted as a boundary that are not boundaries
+        # fn - frames predicted as a non-boundary that are boundaries
+        tp = ((preds == 1) & (bounds == 1) & valid_mask).float().sum()
+        fp = ((preds == 1) & (bounds == 0) & valid_mask).float().sum()
+        fn = ((preds == 0) & (bounds == 1) & valid_mask).float().sum()
+
+        return logits, loss, acc, valid_mask, probs, tp, fp, fn
 
     def training_step(self, batch, batch_idx):
-        _, loss, acc, _ = self._step(batch)
+        _, loss, acc, _, _, tp, fp, fn = self._step(batch)
+        precision, recall, f1 = self._precision_recall_f1(tp, fp, fn)
 
-        self.log("train/loss", loss)
-        self.log("train/acc", acc)
+        self.log("train/loss", loss, on_step=True, on_epoch=True)
+        self.log("train/acc", acc, on_step=True, on_epoch=True)
+        self.log("train/precision", precision, on_step=False, on_epoch=True)
+        self.log("train/recall", recall, on_step=False, on_epoch=True)
+        self.log("train/f1", f1, on_step=False, on_epoch=True, prog_bar=True)
 
         return loss
 
     def validation_step(self, batch, batch_idx):
-        logits, loss, acc, _ = self._step(batch)
+        logits, loss, acc, _, probs, tp, fp, fn = self._step(batch)
+        precision, recall, f1 = self._precision_recall_f1(tp, fp, fn)
 
-        self.log("val/loss", loss)
+        self.log("val/loss", loss, prog_bar=True)
         self.log("val/acc", acc)
+        self.log("val/precision", precision, prog_bar=True)
+        self.log("val/recall", recall)
+        self.log("val/f1", f1, prog_bar=True)
 
         if batch_idx == 0 and self.logger is not None:
-            probs = torch.sigmoid(logits)
             lengths = batch['lengths']
             for i in range(len(batch['mel'])):
                 L = lengths[i].item()
@@ -86,10 +110,14 @@ class MINA(lightning.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        _, loss, acc, _ = self._step(batch)
+        _, loss, acc, _, _, tp, fp, fn = self._step(batch)
+        precision, recall, f1 = self._precision_recall_f1(tp, fp, fn)
 
         self.log("test/loss", loss)
         self.log("test/acc", acc)
+        self.log("test/precision", precision)
+        self.log("test/recall", recall)
+        self.log("test/f1", f1)
 
     def configure_optimizers(self):
         # TODO: swap for Muon
@@ -103,8 +131,8 @@ class MINA(lightning.LightningModule):
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": plateau_scheduler,
-                "monitor": "train/loss",
-                "interval": "step",
+                "monitor": "val/loss",
+                "interval": "epoch",
             },
         }
 
@@ -114,7 +142,7 @@ class MINA(lightning.LightningModule):
         mel_spec_np = mel_spec.detach().cpu().numpy()
         gt_boundaries_np = gt_boundaries.detach().cpu().numpy()
         pred_probs_np = pred_probs.detach().cpu().numpy()
-        pred_boundaries_np = (pred_probs_np > 0.5).astype(int)
+        pred_boundaries_np = (pred_probs_np >= self.hparams.boundary_threshold).astype(int)
 
         fig, ax = plt.subplots(1, 1, figsize=(14, 4))
         ax.imshow(

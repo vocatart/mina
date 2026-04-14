@@ -28,6 +28,7 @@ if __name__ == '__main__':
     parser.add_argument("--tf_dim_ff", type=int, default=768)
     parser.add_argument("--kernel_size", type=int, default=3)
     parser.add_argument("--dropout", type=float, default=0.1)
+    parser.add_argument("--thresh", type=float, default=0.5)
 
     parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--num_epochs", type=int, default=1000)
@@ -54,6 +55,7 @@ if __name__ == '__main__':
         max_len=data_module.rec_max_len,
         sr=data_module.sr,
         hop_length=data_module.hop_length,
+        boundary_threshold=args.thresh,
     )
     model.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
 
@@ -63,14 +65,15 @@ if __name__ == '__main__':
         dirpath="./checkpoints",
         filename="{epoch:02d}-{step:02d}",
         save_top_k=5,
-        monitor="val/loss",
+        monitor="val/f1",
+        mode="max",
         save_last=True
     )
 
     early_stop_callback = EarlyStopping(
-        monitor="val/loss",
+        monitor="val/f1",
         patience=10,
-        mode='min',
+        mode='max',
         verbose=True
     )
 
@@ -94,4 +97,4 @@ if __name__ == '__main__':
         datamodule=data_module,
     )
 
-    trainer.test(model, datamodule=data_module)
+    trainer.test(model, datamodule=data_module, ckpt_path="best")
