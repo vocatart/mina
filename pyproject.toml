@@ -6,7 +6,7 @@ requires-python = ">=3.13"
 dependencies = [
     "librosa>=0.11.0",
     "torch>=2.11.0",
-    "numpy>=2.3.5",
+    "numpy>=2.4.4",
     "textgrid>=1.6.1",
     "tqdm>=4.67.3",
     "lightning>=2.6.1",
