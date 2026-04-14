@@ -33,8 +33,8 @@ class ConvolutionalAcousticEncoder(nn.Module):
         self.latent_dim = latent_dim
         self.hidden_dim = hidden_dim
 
-        # convert 2d mel to 1d for processing in Conv1D layers
-        self.input = nn.Sequential(nn.Linear(mel_dim, hidden_dim), nn.LayerNorm(latent_dim), nn.ReLU())
+        # project mel features to the convolution width
+        self.input = nn.Sequential(nn.Linear(mel_dim, latent_dim), nn.LayerNorm(latent_dim), nn.ReLU())
 
         self.conv_block = nn.Sequential()
         for i in range(num_conv_layers):
