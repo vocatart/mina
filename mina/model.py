@@ -1,0 +1,161 @@
+import lightning
+import numpy as np
+import torch
+from torch import nn
+
+from mina.acoustic import ConvolutionalAcousticEncoder
+from mina.boundary import BoundaryDetector
+
+import matplotlib
+import matplotlib.pyplot as plt
+
+
+class MINA(lightning.LightningModule):
+    def __init__(self, d_mel, d_l, d_h, conv_layers, num_heads, tf_layers, tf_dim_ff, dropout, kernel_size, max_len, sr, hop_length, lr, pos_weight):
+        super().__init__()
+        self.save_hyperparameters()
+
+        self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout)
+        self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout, max_len)
+        # TODO self.classifier = PhonemeClassifier(whatever)
+
+        # for plottage
+        self.sr = sr
+        self.hop_length = hop_length
+
+    def forward(self, x, padding_mask=None):
+        x = self.acoustic(x)
+        return self.detector(x, padding_mask=padding_mask)
+
+    @staticmethod
+    def _make_padding_mask(lengths, max_len):
+        """Creates a boolean padding mask for positions that are padded"""
+        idx = torch.arange(max_len, device=lengths.device)
+        return idx.unsqueeze(0) >= lengths.unsqueeze(1)
+
+    def compute_loss(self, logits, boundaries, mask):
+        # since boundaries are rare compared to the number of frames, we upscale the loss on positive boundaries
+        # essentially, we penalize missed boundaries to ensure the model doesn't predict a whole lot of nothing
+        weight = torch.tensor([self.hparams.pos_weight], device=logits.device)
+
+        loss = nn.functional.binary_cross_entropy_with_logits(
+            logits, boundaries.float(), pos_weight=weight, reduction='none'
+        )
+
+        # exclude the padding positions from the final loss computation
+        return (loss * mask).sum() / mask.sum()
+
+    def _step(self, batch):
+        mel, bounds, lengths, phonemes = batch['mel'], batch['boundaries'], batch['lengths'], batch['phonemes']
+
+        # pad mask from original lengths and longest length in batch
+        padding_mask = self._make_padding_mask(lengths, mel.size(1))
+        valid_mask = ~padding_mask
+
+        logits = self.forward(mel, padding_mask=padding_mask)
+        loss = self.compute_loss(logits, bounds, valid_mask.float())
+
+        preds = (logits > 0).long()
+        acc = ((preds == bounds) & valid_mask).float().sum() / valid_mask.float().sum()
+
+        return logits, loss, acc, valid_mask
+
+    def training_step(self, batch, batch_idx):
+        _, loss, acc, _ = self._step(batch)
+
+        self.log("train/loss", loss)
+        self.log("train/acc", acc)
+
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        logits, loss, acc, _ = self._step(batch)
+
+        self.log("val/loss", loss)
+        self.log("val/acc", acc)
+
+        if batch_idx == 0 and self.logger is not None:
+            probs = torch.sigmoid(logits)
+            lengths = batch['lengths']
+            for i in range(len(batch['mel'])):
+                L = lengths[i].item()
+                self._log_boundary_visualization(
+                    batch['mel'][i][:L], batch['boundaries'][i][:L], probs[i][:L], i
+                )
+
+        return loss
+
+    def test_step(self, batch, batch_idx):
+        _, loss, acc, _ = self._step(batch)
+
+        self.log("test/loss", loss)
+        self.log("test/acc", acc)
+
+    def configure_optimizers(self):
+        # TODO: swap for Muon
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.hparams.lr, weight_decay=1e-2)
+
+        plateau_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode='min', factor=0.5, patience=5
+        )
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": plateau_scheduler,
+                "monitor": "train/loss",
+                "interval": "step",
+            },
+        }
+
+    def _log_boundary_visualization(self, mel_spec, gt_boundaries, pred_probs, i):
+        matplotlib.use('Agg')
+
+        mel_spec_np = mel_spec.detach().cpu().numpy()
+        gt_boundaries_np = gt_boundaries.detach().cpu().numpy()
+        pred_probs_np = pred_probs.detach().cpu().numpy()
+        pred_boundaries_np = (pred_probs_np > 0.5).astype(int)
+
+        fig, ax = plt.subplots(1, 1, figsize=(14, 4))
+        ax.imshow(
+            mel_spec_np.T,
+            aspect='auto',
+            origin='lower',
+            cmap='viridis',
+            extent=[0, mel_spec_np.shape[0], 0, mel_spec_np.shape[1]],
+        )
+
+        gt_indices = np.where(gt_boundaries_np > 0)[0]
+        pred_indices = np.where(pred_boundaries_np > 0)[0]
+
+        for idx in gt_indices:
+            ax.axvline(
+                x=idx,
+                color='lime',
+                linewidth=2.0,
+                alpha=0.9,
+                label='gt' if idx == gt_indices[0] else '',
+            )
+
+        for idx in pred_indices:
+            ax.axvline(
+                x=idx,
+                color='red',
+                linewidth=1.5,
+                alpha=0.9,
+                linestyle='--',
+                label='pred' if idx == pred_indices[0] else '',
+            )
+
+        ax.set_xlabel('frame')
+        ax.set_ylabel('mel bin')
+        handles, labels = ax.get_legend_handles_labels()
+        if handles:
+            by_label = dict(zip(labels, handles))
+            ax.legend(by_label.values(), by_label.keys(), loc='upper right', fontsize=8)
+
+        fig.suptitle(f'Validation Epoch {self.current_epoch}', fontsize=14, y=0.995)
+        plt.tight_layout()
+
+        self.logger.experiment.add_figure(f'val/boundaries_{i}', fig, self.current_epoch)
+        plt.close(fig)
