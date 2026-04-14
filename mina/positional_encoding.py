@@ -11,13 +11,13 @@ class SinusoidalPositionalEncoding(nn.Module):
         position = torch.arange(0, max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, pe_dim, 2) * (-math.log(10000.0) / pe_dim))
 
-        pe = torch.zeros(max_len, 1, pe_dim)
-        pe[:, 0, 0::2] = torch.sin(position * div_term)
-        pe[:, 0, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('pe', pe,)
+        pe = torch.zeros(1, max_len, pe_dim)
+        pe[0, :, 0::2] = torch.sin(position * div_term)
+        pe[0, :, 1::2] = torch.cos(position * div_term)
+        self.register_buffer('pe', pe)
 
     def forward(self, x):
-        x = x + self.pe[:, :x.size(0)]
+        x = x + self.pe[:, :x.size(1), :]
         return self.dropout(x)
 
 class LearnedPositionalEncoding(nn.Module):
