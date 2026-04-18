@@ -71,12 +71,6 @@ class RotaryPositionalEncoding(nn.Module):
         if seq_len is None:
             seq_len = x.size(1)
 
-        if seq_len > self.cos.size(0):
-            raise ValueError(
-                f"Sequence length ({seq_len}) exceeds positional encoding max_len ({self.cos.size(0)}). "
-                "Regenerate binarized data with a larger max_len or reduce sequence length."
-            )
-
         cos = self.cos[:seq_len].unsqueeze(0).to(dtype=x.dtype)
         sin = self.sin[:seq_len].unsqueeze(0).to(dtype=x.dtype)
 
