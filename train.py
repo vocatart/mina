@@ -22,29 +22,29 @@ if __name__ == '__main__':
     parser.add_argument("--num_workers", type=int, default=4)
 
     parser.add_argument("--conv_dim", type=int, default=256) # d_l
-    parser.add_argument("--latent_dim", type=int, default=192) # d_h
-    parser.add_argument("--num_conv", type=int, default=6)
+    parser.add_argument("--latent_dim", type=int, default=64) # d_h
+    parser.add_argument("--num_conv", type=int, default=5)
     parser.add_argument("--num_heads", type=int, default=4)
     parser.add_argument("--tf_layers", type=int, default=4)
-    parser.add_argument("--tf_dim_ff", type=int, default=768)
+    parser.add_argument("--tf_dim_ff", type=int, default=256)
     parser.add_argument("--kernel_size", type=int, default=3)
-    parser.add_argument("--conv_dropout", type=float, default=0.1)
-    parser.add_argument("--transformer_dropout", type=float, default=0.1)
-    parser.add_argument("--thresh", type=float, default=0.5)
+    parser.add_argument("--conv_dropout", type=float, default=0.25)
+    parser.add_argument("--transformer_dropout", type=float, default=0.05)
+    parser.add_argument("--thresh", type=float, default=0.6)
     parser.add_argument(
         "--pe_type",
         type=PositionalEncodingType,
         choices=list(PositionalEncodingType),
-        default=PositionalEncodingType.SINUSOIDAL,
+        default=PositionalEncodingType.LEARNED,
         help="Type of positional encoding"
     )
 
-    parser.add_argument("--lr_muon", type=float, default=5e-4)
-    parser.add_argument("--lr_adam", type=float, default=5e-4)
-    parser.add_argument("--weight_decay", type=float, default=0.01)
+    parser.add_argument("--lr_muon", type=float, default=1.7e-3)
+    parser.add_argument("--lr_adam", type=float, default=8.1e-3)
+    parser.add_argument("--weight_decay", type=float, default=1e-4)
     parser.add_argument("--num_epochs", type=int, default=1000)
-    parser.add_argument("--pos_weight", type=float, default=5.0)
-    parser.add_argument("--warmup_steps", type=int, default=500)
+    parser.add_argument("--pos_weight", type=float, default=1.9)
+    parser.add_argument("--warmup_steps", type=int, default=0)
 
     args = parser.parse_args()
     bin_data = Path(args.data_dir)

@@ -178,10 +178,10 @@ if __name__ == "__main__":
     parser.add_argument("dataset")
     parser.add_argument("output")
 
-    parser.add_argument("--sr", type=int, default=48000, help="Target sample rate")
-    parser.add_argument("--mels", type=int, default=80, help="Number of mel bins")
-    parser.add_argument("--hop_length", type=int, default=160, help="Hop length")
-    parser.add_argument("--n_fft", type=int, default=1024, help="FFT length")
+    parser.add_argument("--sr", type=int, default=8000, help="Target sample rate")
+    parser.add_argument("--mels", type=int, default=40, help="Number of mel bins")
+    parser.add_argument("--hop_length", type=int, default=256, help="Hop length")
+    parser.add_argument("--n_fft", type=int, default=400, help="FFT length")
 
     parser.add_argument("--time_split", type=int, default=10, help="Audio segment length")
     parser.add_argument("--val_split", type=float, default=0.1, help="Validation split")
