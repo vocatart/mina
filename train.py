@@ -12,6 +12,7 @@ from mina.model import MINA
 from mina.positional_encoding import PositionalEncoding, PositionalEncodingType
 
 if __name__ == '__main__':
+    torch.serialization.add_safe_globals([PositionalEncodingType])
     torch.set_float32_matmul_precision('medium')
 
     parser = argparse.ArgumentParser()

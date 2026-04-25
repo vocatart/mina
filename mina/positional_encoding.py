@@ -67,10 +67,8 @@ class RotaryPositionalEncoding(nn.Module):
         self.register_buffer('cos', sinusoid_inp.cos())
         self.register_buffer('sin', sinusoid_inp.sin())
 
-    def forward(self, x, seq_len=None):
-        if seq_len is None:
-            seq_len = x.size(1)
-
+    def forward(self, x):
+        seq_len = x.size(1)
         cos = self.cos[:seq_len].unsqueeze(0).to(dtype=x.dtype)
         sin = self.sin[:seq_len].unsqueeze(0).to(dtype=x.dtype)
 
