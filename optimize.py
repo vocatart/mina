@@ -169,7 +169,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size, workers):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('data_dir')
-    parser.add_argument('--batch_size', type=int, default=32)
+    parser.add_argument('--batch_size', type=int, default=4)
     parser.add_argument('--workers', type=int, default=4)
     parser.add_argument('--trials', type=int, default=200)
     args = parser.parse_args()
