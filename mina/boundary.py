@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from mina.positional_encoding import PositionalEncoding
+from mina.transformer import MinaTransformerEncoder, MinaTransformerEncoderLayer
 
 
 class BoundaryDetector(nn.Module):
@@ -8,25 +9,16 @@ class BoundaryDetector(nn.Module):
     def __init__(self, hidden_dim, num_heads, num_layers, feedforward_dim, dropout, max_len, pe_type):
         super().__init__()
 
-        # TODO: test the other ones? Rotary will probably work best here
         self.positional_encoding = PositionalEncoding(hidden_dim, max_len, dropout, pe_type)
 
-        # right now i just need this model to WORK so im using the unoptimized pytorch stuff
-        # TODO: swap this part out for something that is more memory efficient (xformers blocks?)
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=hidden_dim,
-            nhead=num_heads,
-            dim_feedforward=feedforward_dim,
-            dropout=dropout,
-            batch_first=True
+        self.transformer = MinaTransformerEncoder(
+            hidden_dim,
+            num_heads,
+            num_layers,
+            feedforward_dim,
+            dropout,
         )
 
-        # TODO: for some reason pytorch makes it so you have to MANUALLY INITIALIZE ALL LAYERS???
-        # I've done this before in other work, I just need to port it over
-
-        self.transformer = nn.TransformerEncoder(
-            encoder_layer, num_layers, enable_nested_tensor=False
-        )
         self.output = nn.Linear(hidden_dim, 1)
 
     def forward(self, x, padding_mask=None):

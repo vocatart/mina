@@ -35,9 +35,8 @@ if __name__ == '__main__':
     parser.add_argument(
         "--pe_type",
         type=PositionalEncodingType,
-        choices=list(PositionalEncodingType),
-        default=PositionalEncodingType.LEARNED,
-        help="Type of positional encoding"
+        choices=["sinusoidal", "learned", "rope"],
+        default=PositionalEncodingType.ROPE,
     )
 
     parser.add_argument("--lr_muon", type=float, default=1.7e-3)
