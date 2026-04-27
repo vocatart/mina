@@ -23,6 +23,6 @@ class BoundaryDetector(nn.Module):
 
     def forward(self, x, padding_mask=None):
         x = self.positional_encoding(x)
-        x = self.transformer(x, src_key_padding_mask=padding_mask)
+        x = self.transformer(x, padding_mask=padding_mask)
 
         return self.output(x).squeeze(-1)
