@@ -20,7 +20,7 @@ class MINA(lightning.LightningModule):
         max_len, sr, hop_length, muon_lr, adam_lr, pos_weight, boundary_threshold,
         pe_type: PositionalEncodingType, weight_decay, warmup_steps):
         super().__init__()
-        self.save_hyperparameters(ignore=["sr", "hop_length"])
+        self.save_hyperparameters()
 
         self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv)
         self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
