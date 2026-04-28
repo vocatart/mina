@@ -18,6 +18,8 @@ dependencies = [
     "optuna-integration[pytorch-lightning]>=4.8.0",
     "optuna-dashboard>=0.20.0",
     "pytest>=9.0.3",
+    "onnx>=1.21.0",
+    "onnxslim>=0.1.91",
 ]
 
 [tool.uv.sources]

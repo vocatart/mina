@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from muon import SingleDeviceMuonWithAuxAdam
 from torch import nn
-from torch.optim.lr_scheduler import LinearLR, SequentialLR, ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from mina.acoustic import ConvolutionalAcousticEncoder
 from mina.boundary import BoundaryDetector
@@ -223,3 +223,28 @@ class MINA(lightning.LightningModule):
 
         self.logger.experiment.add_figure(f'val/boundaries_{i}', fig, self.current_epoch)
         plt.close(fig)
+
+    def export(self, path: str):
+        self.eval()
+
+        dummy_mel = torch.zeros(1, self.hparams.max_len, self.acoustic.mel_dim)
+
+        torch.onnx.export(
+            MinaONNXWrapper(self),
+            (dummy_mel,),
+            path,
+            input_names=["mel"],
+            output_names=["boundaries"],
+            dynamic_axes={"mel": {1: "seq_len"}, "boundaries": {1: "seq_len"}},
+            opset_version=None,
+        )
+
+class MinaONNXWrapper(nn.Module):
+        def __init__(self, model):
+            super().__init__()
+            self.model = model
+            self.threshold = model.hparams.boundary_threshold
+
+        def forward(self, mel):
+            logits = self.model(mel)
+            return (torch.sigmoid(logits) >= self.threshold)
