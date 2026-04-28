@@ -1,4 +1,3 @@
-import torch
 from torch import nn
 from mina.positional_encoding import PositionalEncoding
 from mina.transformer import MinaTransformerEncoder, MinaTransformerEncoderLayer

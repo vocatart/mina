@@ -60,7 +60,7 @@ class RotaryPositionalEncoding(nn.Module):
         super().__init__()
 
         inv_freq = 1. / (10000 ** (torch.arange(0, pe_dim, 2).float() / pe_dim))
-        inv_freq = torch.cat((inv_freq, inv_freq), dim=-1)
+        inv_freq = torch.cat((torch.tensor(inv_freq), torch.tensor(inv_freq)), dim=-1)
         position = torch.arange(max_len).float()
         sinusoid_inp = torch.outer(position, inv_freq)
 

@@ -179,7 +179,7 @@ class MINA(lightning.LightningModule):
             aspect='auto',
             origin='lower',
             cmap='viridis',
-            extent=[0, mel_spec_np.shape[0], 0, mel_spec_np.shape[1]],
+            extent=(0.0, float(mel_spec_np.shape[0]), 0.0, float(mel_spec_np.shape[1])),
         )
 
         gt_indices = np.where(gt_boundaries_np > 0)[0]
@@ -242,4 +242,4 @@ class MinaONNXWrapper(nn.Module):
 
         def forward(self, mel):
             logits = self.model(mel)
-            return (torch.sigmoid(logits) >= self.threshold)
+            return torch.sigmoid(logits) >= self.threshold
