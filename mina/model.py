@@ -157,20 +157,13 @@ class MINA(lightning.LightningModule):
             patience=5
         )
 
-        return {
-            "optimizer": optimizer,
-            "lr_schedulers": [
-                {
-                    "scheduler": warmup_scheduler,
-                    "interval": "step",
-                },
-                {
-                    "scheduler": plateau_scheduler,
-                    "monitor": "val/loss",
-                    "interval": "epoch",
-                },
+        return (
+            [optimizer],
+            [
+                {"scheduler": warmup_scheduler, "interval": "step"},
+                {"scheduler": plateau_scheduler, "monitor": "val/f1", "interval": "epoch"},
             ],
-        }
+        )
 
     def _log_boundary_visualization(self, mel_spec, gt_boundaries, pred_probs, i):
         matplotlib.use('Agg')
