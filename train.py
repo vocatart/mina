@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import lightning
@@ -95,7 +96,7 @@ if __name__ == '__main__':
         verbose=True
     )
 
-    logger = TensorBoardLogger("./logs", name="segment")
+    logger = TensorBoardLogger(".", name="lightning_logs")
 
     trainer = lightning.Trainer(
         max_epochs=args.num_epochs,
@@ -117,6 +118,10 @@ if __name__ == '__main__':
 
     trainer.test(model, datamodule=data_module, ckpt_path="best")
 
-    best_model = MINA.load_from_checkpoint(checkpoint_path=checkpoint_callback.best_model_path)
-    best_model.export(trainer.checkpoint_callback.best_model_path + "/best.onnx")
-    onnx.save(onnxslim.slim(onnx.load(trainer.checkpoint_callback.best_model_path + "/best.onnx")), trainer.checkpoint_callback.best_model_path + "/best.onnx")
+    best_model_path = checkpoint_callback.best_model_path
+    best_model_dir = os.path.dirname(best_model_path)
+    onnx_path = os.path.join(best_model_dir, "mina.onnx")
+
+    best_model = MINA.load_from_checkpoint(checkpoint_path=best_model_path)
+    best_model.export(onnx_path)
+    onnx.save(onnxslim.slim(onnx.load(onnx_path)), onnx_path)
