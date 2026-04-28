@@ -117,6 +117,6 @@ if __name__ == '__main__':
 
     trainer.test(model, datamodule=data_module, ckpt_path="best")
 
-    best_model = MINA.load_from_checkpoint(cls=checkpoint_path=checkpoint_callback.best_model_path)
+    best_model = MINA.load_from_checkpoint(checkpoint_path=checkpoint_callback.best_model_path)
     best_model.export(trainer.checkpoint_callback.best_model_path + "/best.onnx")
     onnx.save(onnxslim.slim(onnx.load(trainer.checkpoint_callback.best_model_path + "/best.onnx")), trainer.checkpoint_callback.best_model_path + "/best.onnx")
