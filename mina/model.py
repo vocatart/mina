@@ -231,6 +231,7 @@ class MINA(lightning.LightningModule):
             output_names=["boundaries"],
             dynamic_axes={"mel": {1: "seq_len"}, "boundaries": {1: "seq_len"}},
             opset_version=None,
+            external_data=False,
         )
 
 class MinaONNXWrapper(nn.Module):
