@@ -219,6 +219,7 @@ class MINA(lightning.LightningModule):
 
     def export(self, path: str):
         self.eval()
+        self.cpu()
 
         dummy_mel = torch.zeros(1, self.hparams.max_len, self.acoustic.mel_dim)
 
