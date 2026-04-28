@@ -1,8 +1,9 @@
+import torch
 from torch import nn
 
 class MelConvBlock(nn.Module):
     """Convolutional layer for extracting mel features"""
-    def __init__(self, latent_dim, kernel_size, dropout):
+    def __init__(self, latent_dim: int, kernel_size: int, dropout: float) -> None:
         super().__init__()
 
         self.conv = nn.Conv1d(latent_dim, latent_dim, kernel_size, padding="same")
@@ -10,7 +11,7 @@ class MelConvBlock(nn.Module):
         self.activation = nn.ReLU()
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         skip = x
 
         x_conv = x.transpose(1, 2)
@@ -26,7 +27,8 @@ class MelConvBlock(nn.Module):
 
 class ConvolutionalAcousticEncoder(nn.Module):
     """Convolutional encoder for extracting mel features"""
-    def __init__(self, mel_dim, latent_dim, hidden_dim, num_conv_layers, kernel_size, dropout):
+    def __init__(self, mel_dim: int, latent_dim: int, hidden_dim: int,
+                 num_conv_layers: int, kernel_size: int, dropout: float) -> None:
         super().__init__()
 
         self.mel_dim = mel_dim
@@ -42,7 +44,7 @@ class ConvolutionalAcousticEncoder(nn.Module):
 
         self.output = nn.Linear(latent_dim, hidden_dim)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.input(x)
         x = self.conv_block(x)
         x = self.output(x)

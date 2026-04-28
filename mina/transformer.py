@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 class MinaTransformerEncoderLayer(nn.Module):
-    def __init__(self, d_model, num_heads, dim_feedforward, dropout):
+    """Transformer encoder layer with scaled dot product attention"""
+    def __init__(self, d_model: int, num_heads: int, dim_feedforward: int,
+                 dropout: float) -> None:
         super().__init__()
         self.num_heads = num_heads
         self.head_dim = d_model // num_heads
@@ -26,7 +27,8 @@ class MinaTransformerEncoderLayer(nn.Module):
 
         self._init_weights()
 
-    def _init_weights(self):
+    def _init_weights(self) -> None:
+        """Initialize all weights using Xavier uniform initialization."""
         for m in [self.q_proj, self.k_proj, self.v_proj, self.out_proj]:
             nn.init.xavier_uniform_(m.weight)
             nn.init.zeros_(m.bias)
@@ -35,7 +37,7 @@ class MinaTransformerEncoderLayer(nn.Module):
                 nn.init.xavier_uniform_(m.weight)
                 nn.init.zeros_(m.bias)
 
-    def forward(self, x, padding_mask=None):
+    def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
         b, t, d = x.shape
 
         attn_bias = None
@@ -48,8 +50,10 @@ class MinaTransformerEncoderLayer(nn.Module):
         q = self.q_proj(x).view(b, t, self.num_heads, self.head_dim).transpose(1, 2)
         k = self.k_proj(x).view(b, t, self.num_heads, self.head_dim).transpose(1, 2)
         v = self.v_proj(x).view(b, t, self.num_heads, self.head_dim).transpose(1, 2)
+
         dropout_p = self.dropout.p if self.training else 0.0
-        x = F.scaled_dot_product_attention(q, k, v, attn_mask=attn_bias, dropout_p=dropout_p)
+
+        x = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=attn_bias, dropout_p=dropout_p)
         x = self.out_proj(x.transpose(1, 2).reshape(b, t, d))
         x = skip + self.dropout(x)
 
@@ -59,16 +63,18 @@ class MinaTransformerEncoderLayer(nn.Module):
 
         return x
 
-
 class MinaTransformerEncoder(nn.Module):
-    def __init__(self, d_model, num_heads, num_layers, dim_feedforward, dropout):
+    """Custom transformer encoder for boundary detection"""
+    def __init__(self, d_model: int, num_heads: int, num_layers: int,
+                 dim_feedforward: int, dropout: float) -> None:
         super().__init__()
         
-        self.layers = nn.Sequential()
+        self.layers = nn.ModuleList([])
         for i in range(num_layers):
             self.layers.append(MinaTransformerEncoderLayer(d_model, num_heads, dim_feedforward, dropout))
 
-    def forward(self, x, padding_mask=None):
+    def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
         for layer in self.layers:
             x = layer(x, padding_mask=padding_mask)
+
         return x

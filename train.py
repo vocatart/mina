@@ -12,7 +12,7 @@ from lightning.pytorch.loggers import TensorBoardLogger
 
 from mina.dataset import MinaDataModule
 from mina.model import MINA
-from mina.positional_encoding import PositionalEncoding, PositionalEncodingType
+from mina.positional_encoding import PositionalEncodingType
 
 if __name__ == '__main__':
     torch.serialization.add_safe_globals([PositionalEncodingType])

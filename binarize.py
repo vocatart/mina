@@ -2,8 +2,10 @@ import argparse
 import datetime
 import json
 import os
+from argparse import Namespace
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+from typing import Any
 
 import librosa
 import numpy as np
@@ -13,7 +15,7 @@ from tqdm import tqdm
 
 
 class Preprocessor:
-    def __init__(self, a):
+    def __init__(self, a: Namespace) -> None:
         self.db = Path(a.dataset)
         self.out = Path(a.output)
 
@@ -54,17 +56,32 @@ class Preprocessor:
 
         print(f"Found phonemes: {self.phoneme_map}")
 
-    def update_max_seq_len(self, seq_len: int):
+    def update_max_seq_len(self, seq_len: int) -> None:
+        """
+        Update the longest sequence length seen by the preprocessor
+
+        Args:
+            seq_len (int): Current sequence length
+        """
+
         if seq_len > self.longest_seen_sequence:
             # print(f"New longest sequence {seq_len}")
             self.longest_seen_sequence = seq_len
 
-    def get_dur(self, audio_file: Path):
+    def get_dur(self, audio_file: Path) -> float:
+        """
+        Get duration of audio file
+
+        Args:
+            audio_file (Path): Audio file path
+        """
+
         dur = librosa.get_duration(path=audio_file)
         self.total_length += dur
         return dur
 
-    def process_audio(self):
+    def process_audio(self) -> None:
+        """Binarize saved audio files"""
         total_length = 0.0
         longest_seen_sequence = 0
 
@@ -79,7 +96,14 @@ class Preprocessor:
         self.total_length = total_length
         self.longest_seen_sequence = longest_seen_sequence
 
-    def process_single_audio(self, audio_file: Path):
+    def process_single_audio(self, audio_file: Path) -> tuple[float, int | Any]:
+        """
+        Binarize single audio file
+
+        Args:
+            audio_file (Path): Audio file path
+        """
+
         audio_length = self.get_dur(audio_file)
         current_pos = 0.0
         slice_idx = 0
@@ -113,7 +137,19 @@ class Preprocessor:
 
         return audio_length, max_seq_len
 
-    def snap_to_next_interval(self, tg: textgrid.TextGrid, position: float, duration: float):
+    def snap_to_next_interval(self, tg: textgrid.TextGrid, position: float, duration: float) -> float:
+        """
+        Snaps given duration to the duration of the next interval
+
+        Args:
+            tg (textgrid.TextGrid): TextGrid object
+            position (float): Position of current interval
+            duration (float): Current chunk duration
+
+        Returns:
+            Duration corresponding to the ending of the next interval from the input duration
+        """
+
         # TODO: assumes phonemes are on tier 0 (they usually are)
         tier = tg.tiers[0]
         target_time = position + self.time_split
@@ -124,7 +160,17 @@ class Preprocessor:
 
         return duration
 
-    def get_mel(self, audio):
+    def get_mel(self, audio: np.ndarray) -> np.ndarray:
+        """
+        Create mel-spectrogram from audio data
+
+        Args:
+            audio (np.ndarray): Audio data array
+
+        Returns:
+            Mel-spectrogram data array
+        """
+
         mel = feature.melspectrogram(
             y=audio,
             sr=self.sr,
@@ -135,7 +181,17 @@ class Preprocessor:
 
         return librosa.power_to_db(mel, ref=np.max).T
 
-    def get_boundaries_and_phonemes(self, tg: textgrid.TextGrid, seq_len: int, offset: float):
+    def get_boundaries_and_phonemes(self, tg: textgrid.TextGrid, seq_len: int, offset: float) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Calculate boundary and phoneme tensors from input data
+
+        Args:
+            tg (textgrid.TextGrid): TextGrid object
+            seq_len (int): Sequence length
+            offset (float): Current position in file
+        """
+
+        # TODO: assumes phonemes are on tier 0 (they usually are)
         tier = tg.tiers[0]
         boundaries = np.zeros(seq_len, dtype=np.int64)
         phonemes = np.zeros(seq_len, dtype=np.int64)
@@ -156,7 +212,8 @@ class Preprocessor:
 
         return boundaries, phonemes
 
-    def save_metadata(self):
+    def save_metadata(self) -> None:
+        """Save audio hyperparameters for use in model training"""
         phone_dict = {index: phone for index, phone in enumerate(self.phoneme_map)}
 
         json_dict = {

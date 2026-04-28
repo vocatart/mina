@@ -5,10 +5,8 @@ from pathlib import Path
 import lightning
 import optuna
 import torch
-from librosa.feature import melspectrogram
 from optuna.integration import PyTorchLightningPruningCallback
 from lightning.pytorch.callbacks import EarlyStopping
-from optuna.testing.pytest_storages import storage
 
 from binarize import Preprocessor
 import tempfile
@@ -18,7 +16,7 @@ from mina.model import MINA
 from mina.positional_encoding import PositionalEncodingType
 
 
-def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size, workers):
+def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, workers: int) -> float:
     try:
         # dataset hyperparameters
         # fft has a constraint that it must be higher than the hop length

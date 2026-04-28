@@ -7,9 +7,8 @@ import torch
 from torch.utils.data.dataloader import DataLoader
 from torch.utils.data.dataset import Dataset
 
-
 class MinaDataset(Dataset):
-    def __init__(self, bin_dir: Path):
+    def __init__(self, bin_dir: Path) -> None:
         self.bin_data = sorted(list(bin_dir.glob("**/*.npz")))
         self.bin_meta = json.load(open(bin_dir / "meta.json"))
 
@@ -18,23 +17,30 @@ class MinaDataset(Dataset):
         self.hop_length = self.bin_meta["hparams"]["hop_length"]
         self.n_fft = self.bin_meta["hparams"]["n_fft"]
 
-
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.bin_data)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
         data = np.load(str(self.bin_data[idx]))
 
         return {
-            "mel": torch.FloatTensor(data["mel"]),
-            "boundaries": torch.LongTensor(data["bounds"]),
-            "phonemes": torch.LongTensor(data["phonemes"]),
+            "mel": torch.Tensor(data["mel"]),
+            "boundaries": torch.Tensor(data["bounds"]),
+            "phonemes": torch.Tensor(data["phonemes"]),
         }
 
     @staticmethod
-    def collate_fn(batch):
-        max_len = max(item["mel"].size(0) for item in batch)
+    def collate_fn(batch: list[dict[str, torch.Tensor]]) -> dict[str, torch.Tensor]:
+        """
+        Collate function for mina dataset. Pads to the longest audio sequence and batch and retains original lengths for masking.
 
+        Args:
+            batch (list[dict[str, torch.Tensor]]): A list of dictionaries containing mels, boundaries, and phonemes
+
+        Returns:
+            A dictionary of mels, boundaries, phonemes, and lengths.
+        """
+        max_len = max(item["mel"].size(0) for item in batch)
         mels, bounds, phonemes, lengths = list(), list(), list(), list()
 
         # pad each item to longest sequence in batch
@@ -69,7 +75,7 @@ class MinaDataset(Dataset):
         }
 
 class MinaDataModule(lightning.LightningDataModule):
-    def __init__(self, bin_dir: Path, batch_size: int, n_workers: int):
+    def __init__(self, bin_dir: Path, batch_size: int, n_workers: int) -> None:
         super().__init__()
         self.train, self.val, self.test = None, None, None
 

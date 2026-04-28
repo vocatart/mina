@@ -5,12 +5,15 @@ from lightning_utilities import StrEnum
 from torch import nn
 
 class PositionalEncodingType(StrEnum):
+    """Positional encoding types"""
     SINUSOIDAL = "sinusoidal"
     LEARNED = "learned"
     ROPE = "rope"
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, pe_dim, max_len, dropout, pe_type: PositionalEncodingType):
+    """Positional encoding wrapper"""
+    def __init__(self, pe_dim: int, max_len: int, dropout: float,
+                 pe_type: PositionalEncodingType):
         super().__init__()
         self.pe = None
 
@@ -21,14 +24,12 @@ class PositionalEncoding(nn.Module):
             case _:
                 raise NotImplementedError
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.pe(x)
-
-
 
 class SinusoidalPositionalEncoding(nn.Module):
     """Classic sinusoidal positional encoding"""
-    def __init__(self, pe_dim, dropout, max_len):
+    def __init__(self, pe_dim: int, dropout: float, max_len: int):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
 
@@ -46,17 +47,17 @@ class SinusoidalPositionalEncoding(nn.Module):
 
 class LearnedPositionalEncoding(nn.Module):
     """Learned positional encoding"""
-    def __init__(self, pe_dim, max_len):
+    def __init__(self, pe_dim: int, max_len: int):
         super().__init__()
         self.embedding = nn.Embedding(max_len, pe_dim)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         positions = torch.arange(x.size(1), device=x.device).expand(x.size(0), -1)
         return x + self.embedding(positions)
 
 class RotaryPositionalEncoding(nn.Module):
     """Rotary positional encoding (RoPE)"""
-    def __init__(self, pe_dim, max_len):
+    def __init__(self, pe_dim: int, max_len: int):
         super().__init__()
 
         inv_freq = 1. / (10000 ** (torch.arange(0, pe_dim, 2).float() / pe_dim))
@@ -67,7 +68,7 @@ class RotaryPositionalEncoding(nn.Module):
         self.register_buffer('cos', sinusoid_inp.cos())
         self.register_buffer('sin', sinusoid_inp.sin())
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         seq_len = x.size(1)
         cos = self.cos[:seq_len].unsqueeze(0).to(dtype=x.dtype)
         sin = self.sin[:seq_len].unsqueeze(0).to(dtype=x.dtype)
@@ -75,6 +76,7 @@ class RotaryPositionalEncoding(nn.Module):
         return (x * cos) + (self.rotate_half(x) * sin)
 
     @staticmethod
-    def rotate_half(x):
+    def rotate_half(x: torch.Tensor) -> torch.Tensor:
+        """Rotates vectors Q and K in 2D subspace"""
         x1, x2 = x.chunk(2, dim=-1)
         return torch.cat((-x2, x1), dim=-1)
