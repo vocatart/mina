@@ -37,7 +37,12 @@ class MINA(lightning.LightningModule):
 
     def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
         x = self.acoustic(x)
-        return self.detector(x, padding_mask=padding_mask)
+        x = self.detector(x, padding_mask=padding_mask)
+        return x
+
+    def on_train_start(self):
+        self.acoustic.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
+        self.detector.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
 
     @staticmethod
     def _make_padding_mask(lengths: torch.Tensor, max_len: int) -> torch.Tensor:

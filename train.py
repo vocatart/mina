@@ -76,7 +76,6 @@ if __name__ == '__main__':
         pe_type=args.pe_type,
         warmup_steps=args.warmup_steps
     )
-    model.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
