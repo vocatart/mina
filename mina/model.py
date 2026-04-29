@@ -279,7 +279,7 @@ class MINA(lightning.LightningModule):
             path,
             input_names=["mel"],
             output_names=["boundaries"],
-            dynamic_shapes={"mel": {1: "seq_len"}, "boundaries": {1: "seq_len"}},
+            dynamic_shapes={"input": {1: "x"}},
             opset_version=None,
             external_data=False,
         )
