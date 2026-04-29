@@ -20,6 +20,8 @@ dependencies = [
     "pytest>=9.0.3",
     "onnx>=1.21.0",
     "onnxslim>=0.1.91",
+    "onnxscript>=0.7.0",
+    "rich>=15.0.0",
 ]
 
 [tool.uv.sources]
