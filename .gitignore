@@ -215,5 +215,6 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 /logs/
+/lightning_logs/
 /bin/
 /checkpoints/
