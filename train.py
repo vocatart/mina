@@ -7,7 +7,7 @@ import onnxslim
 import torch
 import argparse
 
-from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, ModelSummary
+from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, RichModelSummary
 from lightning.pytorch.loggers import TensorBoardLogger
 
 from mina.dataset import MinaDataModule
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         max_epochs=args.num_epochs,
         accelerator="auto",
         devices="auto",
-        callbacks=[checkpoint_callback, early_stop_callback, ModelSummary(max_depth=2)],
+        callbacks=[checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=2)],
         logger=logger,
         gradient_clip_val=1.0,
         accumulate_grad_batches=1,
