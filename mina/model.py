@@ -269,7 +269,6 @@ class MINA(lightning.LightningModule):
         Args:
             path (str): Path to save ONNX model
         """
-        self.eval()
         self.cpu()
 
         dummy_mel = torch.zeros(1, self.hparams.max_len, self.acoustic.mel_dim)
@@ -280,7 +279,7 @@ class MINA(lightning.LightningModule):
             path,
             input_names=["mel"],
             output_names=["boundaries"],
-            dynamic_axes={"mel": {1: "seq_len"}, "boundaries": {1: "seq_len"}},
+            dynamic_shapes={"mel": {1: "seq_len"}, "boundaries": {1: "seq_len"}},
             opset_version=None,
             external_data=False,
         )

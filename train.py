@@ -123,5 +123,6 @@ if __name__ == '__main__':
     onnx_path = os.path.join(best_model_dir, "mina.onnx")
 
     best_model = MINA.load_from_checkpoint(checkpoint_path=best_model_path)
+    best_model.eval()
     best_model.export(onnx_path)
     onnx.save(onnxslim.slim(onnx.load(onnx_path)), onnx_path)
