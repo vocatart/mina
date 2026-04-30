@@ -86,7 +86,7 @@ if __name__ == '__main__':
     checkpoint_callback = ModelCheckpoint(
         dirpath="./checkpoints",
         filename="{epoch:02d}-{step:02d}",
-        save_top_k=5,
+        save_top_k=1,
         monitor="val/f1",
         mode="max",
         save_last=True
