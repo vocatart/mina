@@ -25,15 +25,11 @@ class MINA(lightning.LightningModule):
                  boundary_threshold: float, pe_type: PositionalEncodingType,
                  weight_decay: float, warmup_steps: int, sch_frequency: int, compile: bool):
         super().__init__()
-        self.save_hyperparameters(ignore=["sch_frequency", "compile"])
+        self.save_hyperparameters()
 
         self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv)
         self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
         # TODO self.classifier = PhonemeClassifier(whatever)
-
-        # scheduler frequency needs to match the validation epoch frequency
-        self.sch_frequency = sch_frequency
-        self.compile = compile
 
     def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
         x = self.acoustic(x)
@@ -41,7 +37,7 @@ class MINA(lightning.LightningModule):
         return x
 
     def on_train_start(self):
-        if self.compile:
+        if self.hparams.compile:
             self.acoustic.compile(dynamic=True)
             self.detector.compile(dynamic=True)
 
@@ -207,7 +203,7 @@ class MINA(lightning.LightningModule):
             [optimizer],
             [
                 {"scheduler": warmup_scheduler, "interval": "step"},
-                {"scheduler": plateau_scheduler, "monitor": "val/f1", "interval": "epoch", "frequency": self.sch_frequency},
+                {"scheduler": plateau_scheduler, "monitor": "val/f1", "interval": "epoch", "frequency": self.hparams.sch_frequency},
             ],
         )
 
