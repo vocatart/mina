@@ -89,13 +89,12 @@ if __name__ == '__main__':
         save_top_k=1,
         monitor="val/f1",
         mode="max",
-        save_last=True
     )
 
     early_stop_callback = EarlyStopping(
         monitor="val/loss",
-        patience=10,
-        mode='max',
+        patience=3,
+        mode='mine',
         verbose=True
     )
 
