@@ -146,7 +146,7 @@ class MINA(lightning.LightningModule):
 
         if batch_idx == 0 and self.logger is not None:
             lengths = batch['lengths']
-            for i in range(len(batch['mel'])):
+            for i in range(min(len(batch['mel']), 10)):
                 lens = lengths[i].item()
                 self._log_boundary_visualization(
                     batch['mel'][i][:lens], batch['boundaries'][i][:lens], outputs.probs[i][:lens], i
