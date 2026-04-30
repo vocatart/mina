@@ -105,7 +105,7 @@ if __name__ == '__main__':
         max_epochs=args.num_epochs,
         accelerator="auto",
         devices="auto",
-        callbacks=[checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=2), BatchSizeFinder(mode="power", steps_per_trial=100)],
+        callbacks=[checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=2), BatchSizeFinder(mode="binsearch", steps_per_trial=5)],
         logger=logger,
         gradient_clip_val=1.0,
         accumulate_grad_batches=1,
