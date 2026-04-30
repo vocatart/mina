@@ -106,7 +106,7 @@ if __name__ == '__main__':
         gradient_clip_val=1.0,
         accumulate_grad_batches=1,
         log_every_n_steps=10,
-        check_val_every_n_epoch=1,
+        check_val_every_n_epoch=5,
         precision="16-mixed",
 
     )
