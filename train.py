@@ -107,7 +107,7 @@ if __name__ == '__main__':
         accumulate_grad_batches=1,
         log_every_n_steps=10,
         check_val_every_n_epoch=1,
-        precision='32',
+        precision="16-mixed",
 
     )
 
