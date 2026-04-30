@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     parser.add_argument("data_dir", type=str)
 
-    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--batch_size", type=int, default=256)
     parser.add_argument("--num_workers", type=int, default=4)
 
     parser.add_argument("--conv_dim", type=int, default=256) # d_l
