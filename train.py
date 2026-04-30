@@ -48,13 +48,12 @@ if __name__ == '__main__':
     parser.add_argument("--num_epochs", type=int, default=1000)
     parser.add_argument("--pos_weight", type=float, default=1.9)
     parser.add_argument("--warmup_steps", type=int, default=0)
-    parser.add_argument("--compile", action="store_true")
 
     args = parser.parse_args()
     bin_data = Path(args.data_dir)
     lightning.seed_everything(76_805)
 
-    data_module = MinaDataModule(bin_data, 0 if args.batch_size is None else args.batch_size, args.num_workers)
+    data_module = MinaDataModule(bin_data, args.batch_size, args.num_workers)
     model = MINA(
         d_mel=data_module.n_mels,
         d_l=args.conv_dim,
@@ -77,9 +76,6 @@ if __name__ == '__main__':
         pe_type=args.pe_type,
         warmup_steps=args.warmup_steps
     )
-
-    if args.compile:
-        model.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
@@ -105,7 +101,7 @@ if __name__ == '__main__':
         max_epochs=args.num_epochs,
         accelerator="auto",
         devices="auto",
-        callbacks=[checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=2), BatchSizeFinder(mode="binsearch", steps_per_trial=5)],
+        callbacks=[checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=2), BatchSizeFinder(mode="binsearch")],
         logger=logger,
         gradient_clip_val=1.0,
         accumulate_grad_batches=1,
