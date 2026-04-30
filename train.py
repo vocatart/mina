@@ -48,6 +48,8 @@ if __name__ == '__main__':
     parser.add_argument("--num_epochs", type=int, default=1000)
     parser.add_argument("--pos_weight", type=float, default=1.9)
     parser.add_argument("--warmup_steps", type=int, default=0)
+    parser.add_argument("--val_n_epochs", type=int, default=10)
+    parser.add_argument("--no_compile", action="store_false")
 
     args = parser.parse_args()
     bin_data = Path(args.data_dir)
@@ -74,7 +76,9 @@ if __name__ == '__main__':
         hop_length=data_module.hop_length,
         boundary_threshold=args.thresh,
         pe_type=args.pe_type,
-        warmup_steps=args.warmup_steps
+        warmup_steps=args.warmup_steps,
+        sch_frequency=args.val_n_epochs,
+        compile=not args.no_compile
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")

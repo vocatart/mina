@@ -23,17 +23,17 @@ class MINA(lightning.LightningModule):
                  dropout_tf: float, kernel_size: int, max_len: int, sr: int,
                  hop_length: int, muon_lr: float, adam_lr: float, pos_weight: float,
                  boundary_threshold: float, pe_type: PositionalEncodingType,
-                 weight_decay: float, warmup_steps: int):
+                 weight_decay: float, warmup_steps: int, sch_frequency: int, compile: bool):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=["sch_frequency", "compile"])
 
         self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv)
         self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
         # TODO self.classifier = PhonemeClassifier(whatever)
 
-        # for plottage
-        self.sr = sr
-        self.hop_length = hop_length
+        # scheduler frequency needs to match the validation epoch frequency
+        self.sch_frequency = sch_frequency
+        self.compile = compile
 
     def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
         x = self.acoustic(x)
@@ -41,8 +41,9 @@ class MINA(lightning.LightningModule):
         return x
 
     def on_train_start(self):
-        self.acoustic.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
-        self.detector.compile(mode="max-autotune-no-cudagraphs", dynamic=True)
+        if self.compile:
+            self.acoustic.compile(dynamic=True)
+            self.detector.compile(dynamic=True)
 
     @staticmethod
     def _make_padding_mask(lengths: torch.Tensor, max_len: int) -> torch.Tensor:
@@ -157,7 +158,7 @@ class MINA(lightning.LightningModule):
 
         return outputs.loss
 
-    def test_step(self, batch: dict[str, torch.Tensor], batch_idx: int) -> torch.Tensor:
+    def test_step(self, batch: dict[str, torch.Tensor], batch_idx: int) -> None:
         outputs = self._step(batch)
         precision, recall, f1 = self._precision_recall_f1(outputs.counts)
 
@@ -206,7 +207,7 @@ class MINA(lightning.LightningModule):
             [optimizer],
             [
                 {"scheduler": warmup_scheduler, "interval": "step"},
-                {"scheduler": plateau_scheduler, "monitor": "val/f1", "interval": "epoch"},
+                {"scheduler": plateau_scheduler, "monitor": "val/f1", "interval": "epoch", "frequency": self.sch_frequecy},
             ],
         )
 
