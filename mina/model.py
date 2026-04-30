@@ -207,7 +207,7 @@ class MINA(lightning.LightningModule):
             [optimizer],
             [
                 {"scheduler": warmup_scheduler, "interval": "step"},
-                {"scheduler": plateau_scheduler, "monitor": "val/f1", "interval": "epoch", "frequency": self.sch_frequecy},
+                {"scheduler": plateau_scheduler, "monitor": "val/f1", "interval": "epoch", "frequency": self.sch_frequency},
             ],
         )
 
