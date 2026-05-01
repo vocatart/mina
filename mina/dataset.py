@@ -90,6 +90,7 @@ class MinaDataModule(lightning.LightningDataModule):
         self.n_fft = self.bin_meta["hparams"]["n_fft"]
         self.valid_split = self.bin_meta["hparams"]["valid_split"]
         self.rec_max_len = self.bin_meta["hparams"]["max_len"]
+        self.vocab_size = self.bin_meta["hparams"]["vocab_size"]
 
         self.persist = True if n_workers > 0 else False
 

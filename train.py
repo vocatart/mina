@@ -78,7 +78,8 @@ if __name__ == '__main__':
         pe_type=args.pe_type,
         warmup_steps=args.warmup_steps,
         sch_frequency=args.val_n_epochs,
-        compile=args.no_compile
+        do_compile=args.no_compile,
+        vocab_size=data_module.vocab_size
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")

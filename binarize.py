@@ -48,11 +48,9 @@ class Preprocessor:
             tg = textgrid.TextGrid.fromFile(audio_file.with_suffix(".TextGrid"))
             tier = tg[0]
             for interval in tier.intervals:
-                if len(interval.mark) > 5:
-                    print(audio_file, interval.mark, tier.name)
                 phoneme_idx.append(interval.mark)
 
-        self.phoneme_map = sorted(tuple(set(phoneme_idx)))
+        self.phoneme_map = sorted(tuple(set(phoneme_idx))).insert(0, "<pad>")
 
         print(f"Found phonemes: {self.phoneme_map}")
 
@@ -224,7 +222,8 @@ class Preprocessor:
                 "n_fft": self.n_fft,
                 "hop_length": self.hop_length,
                 "valid_split": self.valid_split,
-                "max_len": self.longest_seen_sequence
+                "max_len": self.longest_seen_sequence,
+                "vocab_size": len(self.phoneme_map),
             }
         }
 

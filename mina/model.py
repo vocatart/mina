@@ -13,6 +13,7 @@ from mina.boundary import BoundaryDetector
 import matplotlib
 import matplotlib.pyplot as plt
 
+from mina.phoneme import PhonemeDetector
 from mina.positional_encoding import PositionalEncodingType
 
 EPSILON = 1e-8
@@ -22,22 +23,22 @@ class MINA(lightning.LightningModule):
                  num_heads: int, tf_layers: int, tf_dim_ff: int, dropout_conv: float,
                  dropout_tf: float, kernel_size: int, max_len: int, sr: int,
                  hop_length: int, muon_lr: float, adam_lr: float, pos_weight: float,
-                 boundary_threshold: float, pe_type: PositionalEncodingType,
-                 weight_decay: float, warmup_steps: int, sch_frequency: int, compile: bool):
+                 boundary_threshold: float, pe_type: PositionalEncodingType, vocab_size: int,
+                 weight_decay: float, warmup_steps: int, sch_frequency: int, do_compile: bool):
         super().__init__()
         self.save_hyperparameters()
 
         self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv)
         self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
-        # TODO self.classifier = PhonemeClassifier(whatever)
+        self.classifier = PhonemeDetector(d_h, num_heads, vocab_size, dropout_tf)
 
     def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
-        x = self.acoustic(x)
-        x = self.detector(x, padding_mask=padding_mask)
-        return x
+        latent = self.acoustic(x)
+        bounds = self.detector(latent, padding_mask=padding_mask)
+        return bounds
 
     def on_train_start(self):
-        if self.hparams.compile:
+        if self.hparams.do_compile:
             self.acoustic.compile(dynamic=True)
             self.detector.compile(dynamic=True)
 
