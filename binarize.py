@@ -50,7 +50,8 @@ class Preprocessor:
             for interval in tier.intervals:
                 phoneme_idx.append(interval.mark)
 
-        self.phoneme_map = sorted(tuple(set(phoneme_idx))).insert(0, "<pad>")
+        phoneme_sort = sorted(tuple(set(phoneme_idx)))
+        self.phoneme_map = ["<pad>"] + phoneme_sort
 
         print(f"Found phonemes: {self.phoneme_map}")
 
