@@ -9,7 +9,7 @@ dependencies = [
     "numpy>=2.4.4",
     "textgrid>=1.6.1",
     "tqdm>=4.67.3",
-    "lightning>=2.6.1",
+    "lightning==2.6.1",
     "matplotlib>=3.10.8",
     "tensorboard>=2.20.0",
     "optuna>=4.8.0",
