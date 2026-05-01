@@ -7,13 +7,13 @@ from muon import SingleDeviceMuonWithAuxAdam
 from torch import nn
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from mina.acoustic import ConvolutionalAcousticEncoder
-from mina.boundary import BoundaryDetector
+from mina.acoustic import ConvAcousticEncoder
 
 import matplotlib
 import matplotlib.pyplot as plt
 
 from mina.positional_encoding import PositionalEncodingType
+from mina.temporal import TemporalContextEncoder
 
 EPSILON = 1e-8
 
@@ -27,13 +27,14 @@ class MINA(lightning.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.acoustic = ConvolutionalAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv)
-        self.detector = BoundaryDetector(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
-        # TODO self.classifier = PhonemeClassifier(whatever)
+        self.acoustic = ConvAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv)
+        self.temporal = TemporalContextEncoder(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
+        self.boundary_classifier = nn.Linear(d_h, 1).squeeze(-1)
+
 
     def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
         x = self.acoustic(x)
-        x = self.detector(x, padding_mask=padding_mask)
+        x = self.temporal(x, padding_mask=padding_mask)
         return x
 
     def on_train_start(self):
@@ -276,7 +277,7 @@ class MINA(lightning.LightningModule):
             path,
             input_names=["mel"],
             output_names=["boundaries"],
-            dynamic_shapes={"x": {1: "seq_len"}},
+            dynamic_shapes={"x": {1: "y"}},
             opset_version=None,
             external_data=False,
         )

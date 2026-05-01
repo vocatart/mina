@@ -1,6 +1,9 @@
 import torch
 import torch.nn as nn
 
+from mina.positional_encoding import PositionalEncoding, PositionalEncodingType
+
+
 class MinaTransformerEncoderLayer(nn.Module):
     """Transformer encoder layer with scaled dot product attention"""
     def __init__(self, d_model: int, num_heads: int, dim_feedforward: int,
@@ -76,5 +79,28 @@ class MinaTransformerEncoder(nn.Module):
     def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
         for layer in self.layers:
             x = layer(x, padding_mask=padding_mask)
+
+        return x
+
+class TemporalContextEncoder(nn.Module):
+    """Transformer temporal context encoder"""
+    def __init__(self, hidden_dim: int, num_heads: int, num_layers: int,
+                 feedforward_dim: int, dropout: float, max_len: int,
+                 pe_type: PositionalEncodingType) -> None:
+        super().__init__()
+
+        self.positional_encoding = PositionalEncoding(hidden_dim, max_len, dropout, pe_type)
+
+        self.transformer = MinaTransformerEncoder(
+            hidden_dim,
+            num_heads,
+            num_layers,
+            feedforward_dim,
+            dropout,
+        )
+
+    def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
+        x = self.positional_encoding(x)
+        x = self.transformer(x, padding_mask=padding_mask)
 
         return x
