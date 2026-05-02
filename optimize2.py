@@ -13,7 +13,7 @@ from ray.tune import RunConfig
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
-from lightning.pytorch.callbacks import EarlyStopping
+from lightning.pytorch.callbacks import EarlyStopping, BatchSizeFinder
 import optuna
 
 from binarize import Preprocessor
@@ -125,7 +125,7 @@ def trainable(config: dict):
         trainer = lightning.Trainer(
             accelerator="auto",
             devices="auto",
-            callbacks=[tune_callback, early_stop_callback],
+            callbacks=[tune_callback, early_stop_callback, BatchSizeFinder(mode="power")],
             logger=True,
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,
