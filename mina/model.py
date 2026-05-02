@@ -24,7 +24,8 @@ class MINA(lightning.LightningModule):
                  dropout_tf: float, kernel_size: int, max_len: int, sr: int, phoneme_dropout: float,
                  hop_length: int, muon_lr: float, adam_lr: float, pos_weight: float,
                  boundary_threshold: float, pe_type: PositionalEncodingType, vocab_size: int,
-                 weight_decay: float, warmup_steps: int, sch_frequency: int, do_compile: bool):
+                 weight_decay: float, warmup_steps: int, sch_frequency: int, do_compile: bool,
+                 phoneme_map: dict[int, str]):
         super().__init__()
         self.save_hyperparameters()
 
@@ -166,6 +167,7 @@ class MINA(lightning.LightningModule):
         frame_ph_out = TaskOutput(fp_loss, phoneme_logits, frame_phoneme_preds, frame_phoneme_acc, valid_mask, None)
         seg_ph_out = TaskOutput(sp_loss, segment_logits, segment_phoneme_preds, segment_phoneme_acc, segment_valid_mask, None)
 
+        # TODO: these need to be hparams
         b_loss = b_loss * 1.0
         fp_loss = fp_loss * 0.3
         sp_loss = sp_loss * 0.3
@@ -214,6 +216,9 @@ class MINA(lightning.LightningModule):
                 f_lens = frame_lengths[i].item()
                 self._log_boundary_visualization(
                     batch['mel'][i][:f_lens], batch['boundaries'][i][:f_lens], outputs.boundary.preds[i][:f_lens], i
+                )
+                self._log_segment_visualization(
+                    batch['segment_phonemes'][i], outputs.seg_phoneme.preds[i], i
                 )
 
         return outputs.total_loss
@@ -276,6 +281,19 @@ class MINA(lightning.LightningModule):
                 {"scheduler": plateau_scheduler, "monitor": "val/total_loss", "interval": "epoch", "frequency": self.hparams.sch_frequency},
             ],
         )
+
+    def _log_phoneme_seg_preds(self, gt_segs: torch.Tensor, pred_segs: torch.Tensor, i: int) -> None:
+        gt_np = gt_segs.detach().cpu().numpy()
+        pred_np = pred_segs.detach().cpu().numpy()
+
+        map: dict[int, str] = self.hparams.phoneme_map
+
+        gt_tokens = [map.get(idx) for idx in gt_np if idx != 0]
+        pred_tokens = [map.get(idx) for idx in pred_np if idx != 0]
+
+        output_str = f"{' '.join(gt_tokens)} \n {' '.join(pred_tokens)}"
+
+        self.logger.experiment.add_text(f"val/segs_{i}", output_str, self.current_epoch)
 
     def _log_boundary_visualization(self, mel_spec: torch.Tensor, gt_boundaries: torch.Tensor, pred_boundaries: torch.Tensor, i: int) -> None:
         matplotlib.use("Agg")
