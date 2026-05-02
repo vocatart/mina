@@ -1,12 +1,10 @@
 import argparse
 import gc
-import os
 from pathlib import Path
 import tempfile
 
-os.environ.setdefault("RAY_AIR_NEW_OUTPUT", "0")
-
 import lightning
+import numpy as np
 import torch
 import ray
 import ray.train
@@ -143,7 +141,7 @@ def trainable(config: dict):
 
     except RuntimeError as e:
         if "out of memory" in str(e).lower():
-            print("pruning oom trial")
+            print("OOM — reporting worst metrics")
             torch.cuda.empty_cache()
             gc.collect()
             try:
@@ -182,11 +180,11 @@ if __name__ == "__main__":
         "dim_multiplier": tune.randint(2, 7),
         "kernel_size": tune.choice([3, 5, 7]),
         "conv_dropout": tune.quniform(0.0, 0.5, 0.05),
-        # tf
+        # transformer
         "tf_layers": tune.randint(1, 5),
         "ff_multiplier": tune.choice([1, 2, 4]),
         "transformer_dropout": tune.quniform(0.1, 0.5, 0.05),
-        # ph
+        # phoneme
         "phoneme_dropout": tune.quniform(0.1, 0.5, 0.05),
         # training
         "thresh": tune.quniform(0.3, 0.7, 0.05),
@@ -227,6 +225,7 @@ if __name__ == "__main__":
         run_config=RunConfig(
             name="mina",
             storage_path=str(Path("ray_results").resolve()),
+            verbose=2,
         ),
     )
 
@@ -235,9 +234,10 @@ if __name__ == "__main__":
     df = results.get_dataframe(filter_metric=PRIMARY_METRIC, filter_mode=PRIMARY_MODE)
     print(f"\nCompleted trials: {len(df)}")
 
-    print("\nTop 5 by val/total_loss:")
     cols = ["config/muon_lr", "config/adam_lr", "config/sr", "config/mels",
             "val/total_loss", "val/boundary_f1", "val/ph_seg_acc"]
+
+    print("\nTop 5 by val/total_loss:")
     print(df.nsmallest(5, PRIMARY_METRIC)[cols].to_string())
 
     print("\nTop 5 by val/boundary_f1:")

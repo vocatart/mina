@@ -20,7 +20,8 @@ dependencies = [
     "onnxscript>=0.7.0",
     "rich>=15.0.0",
     "ray[tune]>=2.55.1",
-    "optuna>=4.0.0",
+    "ax-platform>=1.2.4",
+    "optuna>=4.8.0",
 ]
 
 [tool.uv.sources]
