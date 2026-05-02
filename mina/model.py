@@ -34,11 +34,6 @@ class MINA(lightning.LightningModule):
         self.boundary_classifier = nn.Linear(d_h, 1)
         self.phoneme_classifier = PhonemeClassifier(d_h, vocab_size, phoneme_dropout)
 
-        self.register_buffer(
-            "b_logit_shift",
-            torch.log(torch.tensor(boundary_threshold / 1 - boundary_threshold)),
-        )
-
 
     def forward(self, x: torch.Tensor, padding_mask=None, gt_boundaries=None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         x = self.acoustic(x)
@@ -113,40 +108,27 @@ class MINA(lightning.LightningModule):
 
         return b_l, fp_l, sp_l
 
-    def _soft_f1(self, logits: torch.Tensor, targets: torch.Tensor, valid_mask: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def _f1_score(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
         Calculates soft f1 score
 
         Args:
-            logits (torch.Tensor): Tensor of logits
-            targets (torch.Tensor): Tensor of targets
+            counts: True positives, false positives, and false negatives
 
         Returns:
-            Soft f1 score, shifted to center around decision threshold
+            F1 score
         """
+        probs = torch.sigmoid(logits)
+        tp = (probs * targets).sum(dim=0)
+        fp = (probs * (1 - targets)).sum(dim=0)
+        fn = ((1 - probs) * targets).sum(dim=0)
 
-        probs = torch.sigmoid(logits - self.b_logit_shift) * valid_mask.unsqueeze(-1)
-        targets = targets.unsqueeze(-1)
-
-        tp = (probs * targets).sum()
-        fp = (probs * (1 - targets)).sum()
-        fn = ((1 - probs) * targets).sum()
 
         precision = tp / (tp + fp + EPSILON)
         recall = tp / (tp + fn + EPSILON)
         f1 = 2 * precision * recall / (precision + recall + EPSILON)
         return f1.mean()
-
-    def _f1(self, logits: torch.Tensor, targets: torch.Tensor, valid_mask: torch.Tensor) -> torch.Tensor:
-        preds = (torch.sigmoid(logits) >= self.hparams.boundary_threshold).long()
-        tp = ((preds == 1) & (targets == 1) & valid_mask).float().sum()
-        fp = ((preds == 1) & (targets == 0) & valid_mask).float().sum()
-        fn = ((preds == 0) & (targets == 1) & valid_mask).float().sum()
-
-        precision = tp / (tp + fp + EPSILON)
-        recall = tp / (tp + fn + EPSILON)
-        f1 = 2 * precision * recall / (precision + recall + EPSILON)
-        return f1
 
     def _step(self, batch: dict[str, torch.Tensor]) -> StepOutputs:
         mel = batch["mel"]
@@ -171,8 +153,7 @@ class MINA(lightning.LightningModule):
 
         boundary_preds = (torch.sigmoid(boundary_logits) >= self.hparams.boundary_threshold).long()
         boundary_acc = ((boundary_preds == bounds) & valid_mask).float().sum() / valid_mask.float().sum()
-        boundary_f1_soft = self._soft_f1(boundary_logits, bounds, valid_mask)
-        boundary_f1_hard = self._f1(boundary_logits, bounds, valid_mask)
+        boundary_f1 = self._f1_score(boundary_logits, bounds)
 
         frame_phoneme_preds = torch.argmax(phoneme_logits, dim=-1)
         frame_phoneme_acc = ((frame_phoneme_preds == frame_phonemes) & valid_mask).float().sum() / valid_mask.float().sum()
@@ -180,12 +161,12 @@ class MINA(lightning.LightningModule):
         segment_phoneme_preds = torch.argmax(segment_logits, dim=-1)
         segment_phoneme_acc = ((segment_phoneme_preds == segment_phonemes) & segment_valid_mask).float().sum() / segment_valid_mask.float().sum()
 
-        bound_out = TaskOutput(b_loss, boundary_logits, boundary_preds, boundary_acc, valid_mask, boundary_f1_hard)
+        bound_out = TaskOutput(b_loss, boundary_logits, boundary_preds, boundary_acc, valid_mask, boundary_f1)
         frame_ph_out = TaskOutput(fp_loss, phoneme_logits, frame_phoneme_preds, frame_phoneme_acc, valid_mask, None)
         seg_ph_out = TaskOutput(sp_loss, segment_logits, segment_phoneme_preds, segment_phoneme_acc, segment_valid_mask, None)
 
         # TODO: these need to be hparams
-        b_metric = (1 - boundary_f1_soft) * 1.0
+        b_metric = -boundary_f1 * 1.0
         fp_metric = fp_loss * 0.3
         sp_metric = sp_loss * 0.3
 
@@ -201,7 +182,7 @@ class MINA(lightning.LightningModule):
         self.log("train/boundary_f1", outputs.boundary.f1)
 
         self.log("train/ph_frame_loss", outputs.frame_phoneme.loss)
-        self.log("train/ph_frame_acc", outputs.frame_phoneme.acc)
+        self.log("trin/ph_frame_acc", outputs.frame_phoneme.acc)
 
         self.log("train/seg_phoneme_loss", outputs.seg_phoneme.loss)
         self.log("train/seg_ph_acc", outputs.seg_phoneme.acc)
@@ -307,7 +288,7 @@ class MINA(lightning.LightningModule):
         gt_tokens = [map.get(idx) for idx in gt_np if idx]
         pred_tokens = [map.get(idx) for idx in pred_np if idx]
 
-        output_str = f"{' '.join(gt_tokens)}\n{' '.join(pred_tokens)}"
+        output_str = f"{' '.join(gt_tokens)} \n {' '.join(pred_tokens)}"
 
         self.logger.experiment.add_text(f"val/segs_{i}", output_str, self.current_epoch)
 
