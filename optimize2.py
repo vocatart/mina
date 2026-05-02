@@ -158,6 +158,7 @@ def trainable(config: dict):
 
 
 if __name__ == "__main__":
+    torch.serialization.add_safe_globals([PositionalEncodingType])
     parser = argparse.ArgumentParser()
     parser.add_argument("data_dir")
     parser.add_argument("--batch_size", type=int, default=16)
