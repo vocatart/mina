@@ -168,11 +168,11 @@ class MINA(lightning.LightningModule):
         seg_ph_out = TaskOutput(sp_loss, segment_logits, segment_phoneme_preds, segment_phoneme_acc, segment_valid_mask, None)
 
         # TODO: these need to be hparams
-        b_loss = b_loss * 1.0
-        fp_loss = fp_loss * 0.3
-        sp_loss = sp_loss * 0.3
+        b_metric = -self._f1_score(bound_counts) * 1.0
+        fp_metric = fp_loss * 0.3
+        sp_metric = sp_loss * 0.3
 
-        outs = StepOutputs(bound_out, frame_ph_out, seg_ph_out, b_loss + fp_loss + sp_loss)
+        outs = StepOutputs(bound_out, frame_ph_out, seg_ph_out, b_metric + fp_metric + sp_metric)
 
         return outs
 
