@@ -133,7 +133,7 @@ def trainable(config: dict):
             check_val_every_n_epoch=1,
             precision="16-mixed",
             max_epochs=150,
-            enable_progress_bar=False,
+            enable_progress_bar=True,
         )
 
         trainer.fit(model, data_module)
