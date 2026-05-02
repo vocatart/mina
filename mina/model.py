@@ -239,7 +239,7 @@ class MINA(lightning.LightningModule):
 
         nonhidden_params = [
             *self.boundary_classifier.parameters(),
-            *self.temporal.positional_encoding.parameters(),
+            *(self.temporal.pre_positional_encoding.parameters() if self.temporal.pre_positional_encoding is not None else []),
         ]
 
         param_groups = [
