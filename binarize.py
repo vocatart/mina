@@ -208,7 +208,7 @@ class Preprocessor:
 
             if start_idx < end_idx:
                 phoneme_id = self.phoneme_map.index(interval.mark)
-                frame_phonemes[start_idx:end_idx + 1] = phoneme_id
+                frame_phonemes[start_idx:end_idx] = phoneme_id
                 seg_phoneme_list.append(phoneme_id)
 
         return boundaries, frame_phonemes, np.array(seg_phoneme_list, dtype=np.int64)
