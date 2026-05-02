@@ -159,7 +159,8 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             accumulate_grad_batches=1,
             log_every_n_steps=10,
             check_val_every_n_epoch=5,
-            precision='16-mixed'
+            precision='16-mixed',
+            max_epochs=150,
         )
 
         trainer.logger.log_hyperparams(hparams)

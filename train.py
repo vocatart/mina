@@ -85,7 +85,7 @@ if __name__ == '__main__':
         do_compile=args.no_compile,
         vocab_size=data_module.vocab_size,
         phoneme_dropout=args.phoneme_dropout,
-        phoneme_map={int(k): v for k, v in data_module.phoneme_map.items()},
+        phoneme_map=data_module.phoneme_map,
         loss_weights=(args.b_loss_weight, args.pf_loss_weight, args.ps_loss_weight),
     )
 
