@@ -211,7 +211,7 @@ if __name__ == "__main__":
         reduction_factor=3,
     )
 
-    ray.init(log_to_driver=False)
+    ray.init()
 
     tuner = tune.Tuner(
         trainable,
