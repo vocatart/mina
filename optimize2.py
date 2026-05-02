@@ -135,6 +135,7 @@ def trainable(config: dict):
             check_val_every_n_epoch=1,
             precision="16-mixed",
             max_epochs=150,
+            enable_progress_bar=False,
         )
 
         trainer.fit(model, data_module)
@@ -212,7 +213,7 @@ if __name__ == "__main__":
         reduction_factor=3,
     )
 
-    ray.init()
+    ray.init(log_to_driver=False)
 
     tuner = tune.Tuner(
         trainable,
