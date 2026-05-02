@@ -109,9 +109,9 @@ class MINA(lightning.LightningModule):
         return b_l, fp_l, sp_l
 
     @staticmethod
-    def _f1_score(counts: DetectionCounts) -> torch.Tensor:
+    def _f1_score(logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
-        Calculates precision, recall and f1 score
+        Calculates soft f1 score
 
         Args:
             counts: True positives, false positives, and false negatives
@@ -119,10 +119,16 @@ class MINA(lightning.LightningModule):
         Returns:
             F1 score
         """
-        precision = counts.true_positives / (counts.true_positives + counts.false_positives + EPSILON)
-        recall = counts.true_positives / (counts.true_positives + counts.false_negatives + EPSILON)
+        probs = torch.sigmoid(logits)
+        tp = (probs * targets).sum(dim=0)
+        fp = (probs * (1 - targets)).sum(dim=0)
+        fn = ((1 - probs) * targets).sum(dim=0)
+
+
+        precision = tp / (tp + fp + EPSILON)
+        recall = tp / (tp + fn + EPSILON)
         f1 = 2 * precision * recall / (precision + recall + EPSILON)
-        return f1
+        return f1.mean()
 
     def _step(self, batch: dict[str, torch.Tensor]) -> StepOutputs:
         mel = batch["mel"]
@@ -147,6 +153,7 @@ class MINA(lightning.LightningModule):
 
         boundary_preds = (torch.sigmoid(boundary_logits) >= self.hparams.boundary_threshold).long()
         boundary_acc = ((boundary_preds == bounds) & valid_mask).float().sum() / valid_mask.float().sum()
+        boundary_f1 = self._f1_score(boundary_logits, bounds)
 
         frame_phoneme_preds = torch.argmax(phoneme_logits, dim=-1)
         frame_phoneme_acc = ((frame_phoneme_preds == frame_phonemes) & valid_mask).float().sum() / valid_mask.float().sum()
@@ -154,21 +161,12 @@ class MINA(lightning.LightningModule):
         segment_phoneme_preds = torch.argmax(segment_logits, dim=-1)
         segment_phoneme_acc = ((segment_phoneme_preds == segment_phonemes) & segment_valid_mask).float().sum() / segment_valid_mask.float().sum()
 
-        # tp - frames predicted as a boundary that are actually boundaries
-        # fp - frames predicted as a boundary that are not boundaries
-        # fn - frames predicted as a non-boundary that are boundaries
-        bound_counts = DetectionCounts(
-            true_positives=((boundary_preds == 1) & (bounds == 1) & valid_mask).float().sum(),
-            false_positives=((boundary_preds == 1) & (bounds == 0) & valid_mask).float().sum(),
-            false_negatives=((boundary_preds == 0) & (bounds == 1) & valid_mask).float().sum(),
-        )
-
-        bound_out = TaskOutput(b_loss, boundary_logits, boundary_preds, boundary_acc, valid_mask, bound_counts)
+        bound_out = TaskOutput(b_loss, boundary_logits, boundary_preds, boundary_acc, valid_mask, boundary_f1)
         frame_ph_out = TaskOutput(fp_loss, phoneme_logits, frame_phoneme_preds, frame_phoneme_acc, valid_mask, None)
         seg_ph_out = TaskOutput(sp_loss, segment_logits, segment_phoneme_preds, segment_phoneme_acc, segment_valid_mask, None)
 
         # TODO: these need to be hparams
-        b_metric = -self._f1_score(bound_counts) * 1.0
+        b_metric = -boundary_f1 * 1.0
         fp_metric = fp_loss * 0.3
         sp_metric = sp_loss * 0.3
 
@@ -178,37 +176,35 @@ class MINA(lightning.LightningModule):
 
     def training_step(self, batch: dict[str, torch.Tensor], batch_idx: int) -> torch.Tensor:
         outputs = self._step(batch)
-        f1 = self._f1_score(outputs.boundary.counts)
 
-        self.log("train/boundary_loss", outputs.boundary.loss, on_step=True, on_epoch=True)
-        self.log("train/boundary_acc", outputs.boundary.acc, on_step=True, on_epoch=True)
-        self.log("train/boundary_f1", f1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("train/boundary_loss", outputs.boundary.loss)
+        self.log("train/boundary_acc", outputs.boundary.acc)
+        self.log("train/boundary_f1", outputs.boundary.f1)
 
-        self.log("train/ph_frame_loss", outputs.frame_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("train/ph_frame_acc", outputs.frame_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("train/ph_frame_loss", outputs.frame_phoneme.loss)
+        self.log("trin/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("train/seg_phoneme_loss", outputs.seg_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("train/seg_ph_acc", outputs.seg_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("train/seg_phoneme_loss", outputs.seg_phoneme.loss)
+        self.log("train/seg_ph_acc", outputs.seg_phoneme.acc)
 
-        self.log("train/total_loss", outputs.total_loss, on_step=True, on_epoch=True)
+        self.log("train/total_loss", outputs.total_loss, prog_bar=True)
 
         return outputs.total_loss
 
     def validation_step(self, batch: dict[str, torch.Tensor], batch_idx: int) -> torch.Tensor:
         outputs = self._step(batch)
-        f1 = self._f1_score(outputs.boundary.counts)
 
-        self.log("val/boundary_loss", outputs.boundary.loss, on_step=True, on_epoch=True)
-        self.log("val/boundary_acc", outputs.boundary.acc, on_step=True, on_epoch=True)
-        self.log("val/boundary_f1", f1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/boundary_loss", outputs.boundary.loss)
+        self.log("val/boundary_acc", outputs.boundary.acc)
+        self.log("val/boundary_f1", outputs.boundary.f1)
 
-        self.log("val/ph_frame_loss", outputs.frame_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("val/ph_frame_acc", outputs.frame_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("val/ph_frame_loss", outputs.frame_phoneme.loss)
+        self.log("val/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("val/seg_phoneme_loss", outputs.seg_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("val/seg_ph_acc", outputs.seg_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("val/seg_phoneme_loss", outputs.seg_phoneme.loss)
+        self.log("val/seg_ph_acc", outputs.seg_phoneme.acc)
 
-        self.log("val/total_loss", outputs.total_loss, on_step=True, on_epoch=True)
+        self.log("val/total_loss", outputs.total_loss, prog_bar=True)
 
         if batch_idx == 0 and self.logger is not None:
             frame_lengths = batch["frame_lengths"]
@@ -227,19 +223,18 @@ class MINA(lightning.LightningModule):
 
     def test_step(self, batch: dict[str, torch.Tensor], batch_idx: int) -> None:
         outputs = self._step(batch)
-        f1 = self._f1_score(outputs.boundary.counts)
 
-        self.log("test/boundary_loss", outputs.boundary.loss, on_step=True, on_epoch=True)
-        self.log("test/boundary_acc", outputs.boundary.acc, on_step=True, on_epoch=True)
-        self.log("test/boundary_f1", f1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/boundary_loss", outputs.boundary.loss)
+        self.log("test/boundary_acc", outputs.boundary.acc)
+        self.log("test/boundary_f1", outputs.boundary.f1)
 
-        self.log("test/ph_frame_loss", outputs.frame_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("test/ph_frame_acc", outputs.frame_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("test/ph_frame_loss", outputs.frame_phoneme.loss)
+        self.log("test/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("test/seg_phoneme_loss", outputs.seg_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("test/seg_ph_acc", outputs.seg_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("test/seg_phoneme_loss", outputs.seg_phoneme.loss)
+        self.log("test/seg_ph_acc", outputs.seg_phoneme.acc)
 
-        self.log("test/total_loss", outputs.total_loss, on_step=True, on_epoch=True)
+        self.log("test/total_loss", outputs.total_loss, prog_bar=True)
 
     def configure_optimizers(self):
         """Configure muon/adam optimizers"""
@@ -383,12 +378,6 @@ class MinaONNXWrapper(nn.Module):
         phonemes = torch.argmax(phoneme_logits, dim=-1)
         return boundaries, phonemes
 
-class DetectionCounts(NamedTuple):
-    """Detection counts for calculating F1 score"""
-    true_positives: torch.Tensor
-    false_positives: torch.Tensor
-    false_negatives: torch.Tensor
-
 class StepOutputs(NamedTuple):
     """All outputs for a single training step inside of MINA"""
     boundary: TaskOutput
@@ -403,5 +392,5 @@ class TaskOutput(NamedTuple):
     preds: torch.Tensor
     acc: torch.Tensor
     valid_mask: torch.Tensor
-    counts: DetectionCounts | None
+    f1: torch.Tensor | None
 
