@@ -12,25 +12,30 @@ dependencies = [
     "lightning==2.6.1",
     "matplotlib>=3.10.8",
     "tensorboard>=2.20.0",
-    "optuna>=4.8.0",
     "tempdir>=0.7.1",
     "muon-optimizer",
-    "optuna-integration[pytorch-lightning]>=4.8.0",
-    "optuna-dashboard>=0.20.0",
     "pytest>=9.0.3",
     "onnx>=1.21.0",
     "onnxslim>=0.1.91",
     "onnxscript>=0.7.0",
     "rich>=15.0.0",
+    "ray[tune]>=2.55.1",
+    "optuna>=4.0.0",
 ]
 
 [tool.uv.sources]
 torch = [
-  { index = "pytorch-cu130" },
+    { index = "pytorch-cpu", marker = "sys_platform == 'darwin'" },
+    { index = "pytorch-cu130", marker = "sys_platform == 'linux'" },
 ]
 muon-optimizer = { git = "https://github.com/KellerJordan/Muon" }
 
 [[tool.uv.index]]
 name = "pytorch-cu130"
 url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
 explicit = true
