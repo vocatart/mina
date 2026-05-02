@@ -165,7 +165,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     param_space = {
-        "data_dir": args.data_dir,
+        "data_dir": str(Path(args.data_dir).resolve()),
         "batch_size": args.batch_size,
         "workers": args.workers,
         # dataset
