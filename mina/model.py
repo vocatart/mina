@@ -180,17 +180,17 @@ class MINA(lightning.LightningModule):
         outputs = self._step(batch)
         f1 = self._f1_score(outputs.boundary.counts)
 
-        self.log("train/boundary_loss", outputs.boundary.loss, on_step=True, on_epoch=True)
-        self.log("train/boundary_acc", outputs.boundary.acc, on_step=True, on_epoch=True)
-        self.log("train/boundary_f1", f1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("train/boundary_loss", outputs.boundary.loss)
+        self.log("train/boundary_acc", outputs.boundary.acc)
+        self.log("train/boundary_f1", f1)
 
-        self.log("train/ph_frame_loss", outputs.frame_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("train/ph_frame_acc", outputs.frame_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("train/ph_frame_loss", outputs.frame_phoneme.loss)
+        self.log("train/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("train/seg_phoneme_loss", outputs.seg_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("train/seg_ph_acc", outputs.seg_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("train/seg_phoneme_loss", outputs.seg_phoneme.loss)
+        self.log("train/seg_ph_acc", outputs.seg_phoneme.acc)
 
-        self.log("train/total_loss", outputs.total_loss, on_step=True, on_epoch=True)
+        self.log("train/total_loss", outputs.total_loss, prog_bar=True)
 
         return outputs.total_loss
 
@@ -198,17 +198,17 @@ class MINA(lightning.LightningModule):
         outputs = self._step(batch)
         f1 = self._f1_score(outputs.boundary.counts)
 
-        self.log("val/boundary_loss", outputs.boundary.loss, on_step=True, on_epoch=True)
-        self.log("val/boundary_acc", outputs.boundary.acc, on_step=True, on_epoch=True)
-        self.log("val/boundary_f1", f1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/boundary_loss", outputs.boundary.loss)
+        self.log("val/boundary_acc", outputs.boundary.acc)
+        self.log("val/boundary_f1", f1)
 
-        self.log("val/ph_frame_loss", outputs.frame_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("val/ph_frame_acc", outputs.frame_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("val/ph_frame_loss", outputs.frame_phoneme.loss)
+        self.log("val/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("val/seg_phoneme_loss", outputs.seg_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("val/seg_ph_acc", outputs.seg_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("val/seg_phoneme_loss", outputs.seg_phoneme.loss)
+        self.log("val/seg_ph_acc", outputs.seg_phoneme.acc)
 
-        self.log("val/total_loss", outputs.total_loss, on_step=True, on_epoch=True)
+        self.log("val/total_loss", outputs.total_loss, prog_bar=True)
 
         if batch_idx == 0 and self.logger is not None:
             frame_lengths = batch["frame_lengths"]
@@ -229,17 +229,17 @@ class MINA(lightning.LightningModule):
         outputs = self._step(batch)
         f1 = self._f1_score(outputs.boundary.counts)
 
-        self.log("test/boundary_loss", outputs.boundary.loss, on_step=True, on_epoch=True)
-        self.log("test/boundary_acc", outputs.boundary.acc, on_step=True, on_epoch=True)
-        self.log("test/boundary_f1", f1, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("test/boundary_loss", outputs.boundary.loss)
+        self.log("test/boundary_acc", outputs.boundary.acc)
+        self.log("test/boundary_f1", f1)
 
-        self.log("test/ph_frame_loss", outputs.frame_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("test/ph_frame_acc", outputs.frame_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("test/ph_frame_loss", outputs.frame_phoneme.loss)
+        self.log("test/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("test/seg_phoneme_loss", outputs.seg_phoneme.loss, on_step=True, on_epoch=True)
-        self.log("test/seg_ph_acc", outputs.seg_phoneme.acc, on_step=True, on_epoch=True)
+        self.log("test/seg_phoneme_loss", outputs.seg_phoneme.loss)
+        self.log("test/seg_ph_acc", outputs.seg_phoneme.acc)
 
-        self.log("test/total_loss", outputs.total_loss, on_step=True, on_epoch=True)
+        self.log("test/total_loss", outputs.total_loss, prog_bar=True)
 
     def configure_optimizers(self):
         """Configure muon/adam optimizers"""
@@ -345,7 +345,7 @@ class MINA(lightning.LightningModule):
         fig.suptitle(f"Validation Epoch {self.current_epoch}", fontsize=14, y=0.995)
         plt.tight_layout()
 
-        self.logger.experiment.add_figure(f"val/boundaries_{i}", fig, self.current_epoch)
+        self.logger.experiment.add_figure(f"fig/val_boundaries_{i}", fig, self.current_epoch)
         plt.close(fig)
 
     def export(self, path: str) -> None:
