@@ -1,13 +1,17 @@
 import argparse
 import gc
+import os
 from pathlib import Path
 import tempfile
+
+os.environ.setdefault("RAY_AIR_NEW_OUTPUT", "0")
 
 import lightning
 import torch
 import ray
 import ray.train
 from ray import tune
+from ray.tune import RunConfig
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
@@ -138,7 +142,7 @@ def trainable(config: dict):
 
     except RuntimeError as e:
         if "out of memory" in str(e).lower():
-            print("OOM — reporting worst metrics")
+            print("pruning oom trial")
             torch.cuda.empty_cache()
             gc.collect()
             try:
@@ -218,7 +222,7 @@ if __name__ == "__main__":
             scheduler=scheduler,
             num_samples=args.trials,
         ),
-        run_config=ray.train.RunConfig(
+        run_config=RunConfig(
             name="mina",
             storage_path=str(Path("ray_results").resolve()),
         ),
