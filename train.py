@@ -81,7 +81,7 @@ if __name__ == '__main__':
         do_compile=args.no_compile,
         vocab_size=data_module.vocab_size,
         phoneme_dropout=args.transformer_dropout,
-        phoneme_map=data_module.phoneme_map
+        phoneme_map={int(k): v for k, v in data_module.phoneme_map.items()}
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
