@@ -78,7 +78,9 @@ if __name__ == '__main__':
         pe_type=args.pe_type,
         warmup_steps=args.warmup_steps,
         sch_frequency=args.val_n_epochs,
-        compile=args.no_compile
+        do_compile=args.no_compile,
+        vocab_size=data_module.vocab_size,
+        phoneme_dropout=args.transformer_dropout,
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
@@ -87,12 +89,12 @@ if __name__ == '__main__':
         dirpath="./checkpoints",
         filename="{epoch:02d}-{step:02d}",
         save_top_k=1,
-        monitor="val/f1",
-        mode="max",
+        monitor="val/total_loss",
+        mode="min",
     )
 
     early_stop_callback = EarlyStopping(
-        monitor="val/loss",
+        monitor="val/total_loss",
         patience=3,
         mode='min',
         verbose=True

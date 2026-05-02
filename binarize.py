@@ -48,11 +48,10 @@ class Preprocessor:
             tg = textgrid.TextGrid.fromFile(audio_file.with_suffix(".TextGrid"))
             tier = tg[0]
             for interval in tier.intervals:
-                if len(interval.mark) > 5:
-                    print(audio_file, interval.mark, tier.name)
                 phoneme_idx.append(interval.mark)
 
-        self.phoneme_map = sorted(tuple(set(phoneme_idx)))
+        phoneme_sort = sorted(tuple(set(phoneme_idx)))
+        self.phoneme_map = ["<pad>"] + phoneme_sort
 
         print(f"Found phonemes: {self.phoneme_map}")
 
@@ -127,10 +126,10 @@ class Preprocessor:
             seq_len = len(mel_dbs)
             max_seq_len = max(max_seq_len, seq_len)
 
-            boundaries, phonemes = self.get_boundaries_and_phonemes(tg, seq_len, current_pos)
+            boundaries, frame_phonemes, segment_phonemes = self.get_boundaries_and_phonemes(tg, seq_len, current_pos)
 
             with open(os.path.join(self.out, os.path.basename(audio_file) + str(slice_idx) + ".npz"), "wb") as f:
-                np.savez(f, mel=mel_dbs, bounds=boundaries, phonemes=phonemes)
+                np.savez(f, mel=mel_dbs, bounds=boundaries, frame_phonemes=frame_phonemes, segment_phonemes=segment_phonemes)
 
             current_pos = closest_time
             slice_idx += 1
@@ -181,7 +180,7 @@ class Preprocessor:
 
         return librosa.power_to_db(mel, ref=np.max).T
 
-    def get_boundaries_and_phonemes(self, tg: textgrid.TextGrid, seq_len: int, offset: float) -> tuple[np.ndarray, np.ndarray]:
+    def get_boundaries_and_phonemes(self, tg: textgrid.TextGrid, seq_len: int, offset: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculate boundary and phoneme tensors from input data
 
@@ -194,8 +193,9 @@ class Preprocessor:
         # TODO: assumes phonemes are on tier 0 (they usually are)
         tier = tg.tiers[0]
         boundaries = np.zeros(seq_len, dtype=np.int64)
-        phonemes = np.zeros(seq_len, dtype=np.int64)
+        frame_phonemes = np.zeros(seq_len, dtype=np.int64)
 
+        seg_phoneme_list = list()
         for interval in tier.intervals:
             start_idx = int((interval.minTime - offset) * self.sr / self.hop_length)
             end_idx = int((interval.maxTime - offset) * self.sr / self.hop_length)
@@ -203,14 +203,15 @@ class Preprocessor:
             start_idx = max(0, min(seq_len, start_idx))
             end_idx = max(0, min(seq_len, end_idx))
 
-            if 0 <= start_idx < seq_len:
+            if 0 < start_idx < seq_len:
                 boundaries[start_idx] = 1
 
             if start_idx < end_idx:
                 phoneme_id = self.phoneme_map.index(interval.mark)
-                phonemes[start_idx:end_idx + 1] = phoneme_id
+                frame_phonemes[start_idx:end_idx + 1] = phoneme_id
+                seg_phoneme_list.append(phoneme_id)
 
-        return boundaries, phonemes
+        return boundaries, frame_phonemes, np.array(seg_phoneme_list, dtype=np.int64)
 
     def save_metadata(self) -> None:
         """Save audio hyperparameters for use in model training"""
@@ -224,7 +225,8 @@ class Preprocessor:
                 "n_fft": self.n_fft,
                 "hop_length": self.hop_length,
                 "valid_split": self.valid_split,
-                "max_len": self.longest_seen_sequence
+                "max_len": self.longest_seen_sequence,
+                "vocab_size": len(self.phoneme_map),
             }
         }
 

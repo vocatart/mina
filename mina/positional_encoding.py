@@ -69,9 +69,9 @@ class RotaryPositionalEncoding(nn.Module):
         self.register_buffer('sin', sinusoid_inp.sin())
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        seq_len = x.size(1)
-        cos = self.cos[:seq_len].unsqueeze(0).to(dtype=x.dtype)
-        sin = self.sin[:seq_len].unsqueeze(0).to(dtype=x.dtype)
+        seq_len = x.size(-2)
+        cos = self.cos[:seq_len].unsqueeze(0).unsqueeze(0).to(dtype=x.dtype)
+        sin = self.sin[:seq_len].unsqueeze(0).unsqueeze(0).to(dtype=x.dtype)
 
         return (x * cos) + (self.rotate_half(x) * sin)
 

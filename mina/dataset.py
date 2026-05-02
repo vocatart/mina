@@ -24,9 +24,10 @@ class MinaDataset(Dataset):
         data = np.load(str(self.bin_data[idx]))
 
         return {
-            "mel": torch.Tensor(data["mel"]),
-            "boundaries": torch.Tensor(data["bounds"]),
-            "phonemes": torch.Tensor(data["phonemes"]),
+            "mel": torch.tensor(data["mel"], dtype=torch.float32),
+            "boundaries": torch.tensor(data["bounds"], dtype=torch.long),
+            "frame_phonemes": torch.tensor(data["frame_phonemes"], dtype=torch.long),
+            "segment_phonemes": torch.tensor(data["segment_phonemes"], dtype=torch.long),
         }
 
     @staticmethod
@@ -41,12 +42,14 @@ class MinaDataset(Dataset):
             A dictionary of mels, boundaries, phonemes, and lengths.
         """
         max_len = max(item["mel"].size(0) for item in batch)
-        mels, bounds, phonemes, lengths = list(), list(), list(), list()
+        max_seg_len = max(item["segment_phonemes"].size(0) for item in batch)
+        mels, bounds, frame_phonemes, segment_phonemes, frame_lengths, segment_lengths = list(), list(), list(), list(), list(), list()
 
         # pad each item to longest sequence in batch
         # retain original lengths for masking
         for item in batch:
             orig_len = item["mel"].size(0)
+            orig_seg_len = item["segment_phonemes"].size(0)
             n_mels = item["mel"].size(1)
 
             mel_pad = torch.zeros(max_len, n_mels)
@@ -57,21 +60,30 @@ class MinaDataset(Dataset):
             bound_pad[:orig_len] = item["boundaries"]
             bounds.append(bound_pad)
 
-            phoneme_pad = torch.zeros(max_len, dtype=torch.long)
-            phoneme_pad[:orig_len] = item["phonemes"]
-            phonemes.append(phoneme_pad)
+            frame_phoneme_pad = torch.zeros(max_len, dtype=torch.long)
+            frame_phoneme_pad[:orig_len] = item["frame_phonemes"]
+            frame_phonemes.append(frame_phoneme_pad)
 
-            lengths.append(orig_len)
+            segment_phoneme_pad = torch.zeros(max_seg_len, dtype=torch.long)
+            segment_phoneme_pad[:orig_seg_len] = item["segment_phonemes"]
+            segment_phonemes.append(segment_phoneme_pad)
+
+            frame_lengths.append(orig_len)
+            segment_lengths.append(orig_seg_len)
 
         # mel: (B, max_len, n_mels)
         # boundaries: (B, max_len)
-        # phonemes: (B, max_len)
-        # lengths: (B,)
+        # frame_phonemes: (B, max_len)
+        # segment_phoemes: (B, max_seg_len)
+        # frame_lengths: (B,)
+        # segment_lenghts: (B,)
         return {
             "mel": torch.stack(mels, dim=0),
             "boundaries": torch.stack(bounds, dim=0),
-            "phonemes": torch.stack(phonemes, dim=0),
-            "lengths": torch.tensor(lengths, dtype=torch.long),
+            "frame_phonemes": torch.stack(frame_phonemes, dim=0),
+            "segment_phonemes": torch.stack(segment_phonemes, dim=0),
+            "frame_lengths": torch.tensor(frame_lengths, dtype=torch.long),
+            "segment_lengths": torch.tensor(segment_lengths, dtype=torch.long),
         }
 
 class MinaDataModule(lightning.LightningDataModule):
@@ -90,6 +102,7 @@ class MinaDataModule(lightning.LightningDataModule):
         self.n_fft = self.bin_meta["hparams"]["n_fft"]
         self.valid_split = self.bin_meta["hparams"]["valid_split"]
         self.rec_max_len = self.bin_meta["hparams"]["max_len"]
+        self.vocab_size = self.bin_meta["hparams"]["vocab_size"]
 
         self.persist = True if n_workers > 0 else False
 
