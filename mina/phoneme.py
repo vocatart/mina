@@ -52,7 +52,14 @@ class PhonemeClassifier(nn.Module):
         k = self.k_proj(x)
         v = self.v_proj(x)
         dropout_p = self.dropout.p if self.training else 0.0
-        attn = torch.nn.functional.scaled_dot_product_attention(q, k, v, dropout_p=dropout_p)
+
+        attn_bias = None
+        if padding_mask is not None:
+            b, t = padding_mask.shape
+            attn_bias = torch.zeros(b, 1, num_segs, t, device=x.device, dtype=x.dtype)
+            attn_bias = attn_bias.masked_fill(padding_mask.unsqueeze(1).unsqueeze(2), float('-inf'))
+
+        attn = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=attn_bias, dropout_p=dropout_p)
 
         seg_logits = self.seg_out(attn)
 

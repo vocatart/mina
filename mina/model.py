@@ -212,13 +212,15 @@ class MINA(lightning.LightningModule):
 
         if batch_idx == 0 and self.logger is not None:
             frame_lengths = batch["frame_lengths"]
+            segment_lengths = batch["segment_lengths"]
             for i in range(min(len(batch['mel']), 10)):
                 f_lens = frame_lengths[i].item()
+                s_lens = segment_lengths[i].item()
                 self._log_boundary_visualization(
                     batch['mel'][i][:f_lens], batch['boundaries'][i][:f_lens], outputs.boundary.preds[i][:f_lens], i
                 )
                 self._log_phoneme_seg_preds(
-                    batch['segment_phonemes'][i], outputs.seg_phoneme.preds[i], i
+                    batch['segment_phonemes'][i][:s_lens], outputs.seg_phoneme.preds[i][:s_lens], i
                 )
 
         return outputs.total_loss
@@ -288,8 +290,8 @@ class MINA(lightning.LightningModule):
 
         map: dict[int, str] = self.hparams.phoneme_map
 
-        gt_tokens = [map.get(idx) for idx in gt_np if idx != 0]
-        pred_tokens = [map.get(idx) for idx in pred_np if idx != 0]
+        gt_tokens = [map.get(idx) for idx in gt_np if idx]
+        pred_tokens = [map.get(idx) for idx in pred_np if idx]
 
         output_str = f"{' '.join(gt_tokens)} \n {' '.join(pred_tokens)}"
 
