@@ -160,9 +160,9 @@ def trainable(config: dict):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("data_dir")
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--workers", type=int, default=4)
-    parser.add_argument("--trials", type=int, default=500)
+    parser.add_argument("--trials", type=int, default=100)
     args = parser.parse_args()
 
     param_space = {
@@ -212,10 +212,10 @@ if __name__ == "__main__":
         reduction_factor=3,
     )
 
-    ray.init()
+    ray.init(log_to_driver=False)
 
     tuner = tune.Tuner(
-        tune.with_resources(trainable, resources={"gpu": 1, "cpu": 47}),
+        tune.with_resources(trainable, resources={"gpu": 1, "cpu": 20}),
         param_space=param_space,
         tune_config=tune.TuneConfig(
             search_alg=search_alg,
