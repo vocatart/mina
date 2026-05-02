@@ -126,7 +126,7 @@ def trainable(config: dict):
         trainer = lightning.Trainer(
             accelerator="auto",
             devices="auto",
-            callbacks=[tune_callback, early_stop_callback, BatchSizeFinder(mode="power")],
+            callbacks=[tune_callback, early_stop_callback, BatchSizeFinder(mode="binsearch", margin=0.5)],
             logger=True,
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,
