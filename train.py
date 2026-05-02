@@ -50,6 +50,10 @@ if __name__ == '__main__':
     parser.add_argument("--warmup_steps", type=int, default=200)
     parser.add_argument("--val_n_epochs", type=int, default=10)
     parser.add_argument("--no_compile", action="store_false")
+    parser.add_argument("--b_loss_weight", type=float, default=1.0)
+    parser.add_argument("--pf_loss_weight", type=float, default=0.3)
+    parser.add_argument("--ps_loss_weight", type=float, default=0.3)
+    parser.add_argument("--phoneme_dropout", type=float, default=0.05)
 
     args = parser.parse_args()
     bin_data = Path(args.data_dir)
@@ -80,8 +84,9 @@ if __name__ == '__main__':
         sch_frequency=args.val_n_epochs,
         do_compile=args.no_compile,
         vocab_size=data_module.vocab_size,
-        phoneme_dropout=args.transformer_dropout,
-        phoneme_map={int(k): v for k, v in data_module.phoneme_map.items()}
+        phoneme_dropout=args.phoneme_dropout,
+        phoneme_map={int(k): v for k, v in data_module.phoneme_map.items()},
+        loss_weights=(args.b_loss_weight, args.pf_loss_weight, args.ps_loss_weight),
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")

@@ -25,7 +25,7 @@ class MINA(lightning.LightningModule):
                  hop_length: int, muon_lr: float, adam_lr: float, pos_weight: float,
                  boundary_threshold: float, pe_type: PositionalEncodingType, vocab_size: int,
                  weight_decay: float, warmup_steps: int, sch_frequency: int, do_compile: bool,
-                 phoneme_map: dict[int, str]):
+                 phoneme_map: dict[int, str], loss_weights: tuple[float, float, float]):
         super().__init__()
         self.save_hyperparameters()
 
@@ -168,9 +168,9 @@ class MINA(lightning.LightningModule):
         seg_ph_out = TaskOutput(sp_loss, segment_logits, segment_phoneme_preds, segment_phoneme_acc, segment_valid_mask, None)
 
         # TODO: these need to be hparams
-        b_loss = b_loss * 1.5
-        fp_loss = fp_loss * 0.3
-        sp_loss = sp_loss * 0.3
+        b_loss = b_loss * self.hparams.loss_weights[0]
+        fp_loss = fp_loss * self.hparams.loss_weights[1]
+        sp_loss = sp_loss * self.hparams.loss_weights[2]
 
         outs = StepOutputs(bound_out, frame_ph_out, seg_ph_out, b_loss + fp_loss + sp_loss)
 

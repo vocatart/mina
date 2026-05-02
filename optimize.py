@@ -20,7 +20,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
     try:
         # dataset hyperparameters
         # fft has a constraint that it must be higher than the hop length
-        sr = trial.suggest_categorical("sr", [8000, 11025, 22050, 32000, 44100, 48000])
+        sr = trial.suggest_categorical("sr", [8000, 11025, 22050, 32000, 44100])
         mels = trial.suggest_categorical("mels", [40, 64, 80, 128])
         hop_length = trial.suggest_categorical("hop_length", [160, 256])
         n_fft = trial.suggest_categorical("n_fft", [f for f in [400, 512, 1024] if f >= hop_length])
@@ -43,11 +43,13 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
         # feedforward dim must be a multiple of the latent dim
         tf_layers = trial.suggest_int("tf_layers", 1, 4)
         ff_multiplier = trial.suggest_categorical("ff_multiplier", [1, 2, 4])
-        transformer_dropout = trial.suggest_float("tf_dropout", 0.0, 0.5, step=0.05)
-        pe_type = trial.suggest_categorical("pe_type", ["sinusoidal", "learned", "rope"])
+        transformer_dropout = trial.suggest_float("tf_dropout", 0.1, 0.5, step=0.05)
 
         tf_dim_ff = latent_dim * ff_multiplier
         trial.set_user_attr("tf_dim_ff", tf_dim_ff)
+
+        # phoneme classifier
+        phoneme_dropout = trial.suggest_float("phoneme_dropout", 0.1, 0.5, step=0.05)
 
         # other hyperparameters
         thresh = trial.suggest_float("thresh", 0.3, 0.7, step=0.05)
@@ -56,6 +58,11 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
         pos_weight = trial.suggest_float("pos_weight", -2.0, 2.0)
         weight_decay = trial.suggest_float("weight_decay", 1e-4, 1e-1, log=True)
         warmup_steps = trial.suggest_int("warmup_steps", 0, 500, step=100)
+        b_loss_weight = trial.suggest_float("b_loss_weight", 0.0, 2.0, step=0.05)
+        pf_loss_weight = trial.suggest_float("pf_loss_weight", 0.0, 2.0, step=0.05)
+        ps_loss_weight = trial.suggest_float("ps_loss_weight", 0.0, 2.0, step=0.05)
+
+        loss_weights = (b_loss_weight, pf_loss_weight, ps_loss_weight)
 
         temp_dir = tempfile.TemporaryDirectory()
         temp_bin_dir = Path(temp_dir.name) / "bin"
@@ -74,7 +81,6 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             receptive_field=receptive_field,
             tf_layers=tf_layers,
             transformer_dropout=transformer_dropout,
-            pe_type=pe_type,
             tf_dim_ff=tf_dim_ff,
             thresh=thresh,
             muon_lr=muon_lr,
@@ -82,6 +88,8 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             pos_weight=pos_weight,
             weight_decay=weight_decay,
             warmup_steps=warmup_steps,
+            phoneme_dropout=phoneme_dropout,
+            loss_weights=loss_weights,
         )
 
         proc = Preprocessor(argparse.Namespace(**{
@@ -120,20 +128,26 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             sr=sr,
             hop_length=hop_length,
             boundary_threshold=thresh,
-            pe_type=PositionalEncodingType.from_str(pe_type),
-            warmup_steps=warmup_steps
+            pe_type=PositionalEncodingType.from_str("rope"),
+            warmup_steps=warmup_steps,
+            do_compile=False,
+            phoneme_dropout=phoneme_dropout,
+            phoneme_map=data_module.phoneme_map,
+            vocab_size=data_module.vocab_size,
+            sch_frequency=5,
+            loss_weights=loss_weights
         )
 
         early_stop_callback = EarlyStopping(
-            monitor="val/f1",
+            monitor="val/total_loss",
             patience=10,
-            mode='max',
+            mode='min',
             verbose=True
         )
 
         pruning_callback = PyTorchLightningPruningCallback(
             trial=trial,
-            monitor="val/f1",
+            monitor="val/total_loss",
         )
 
         trainer = lightning.Trainer(
@@ -144,15 +158,15 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,
             log_every_n_steps=10,
-            check_val_every_n_epoch=1,
-            precision='32'
+            check_val_every_n_epoch=5,
+            precision='16-mixed'
         )
 
         trainer.logger.log_hyperparams(hparams)
         trainer.fit(model, data_module)
         temp_dir.cleanup()
 
-        return trainer.callback_metrics["val/f1"].item()
+        return trainer.callback_metrics["val/total_loss"].item()
     except RuntimeError as e:
         if "out of memory" in str(e).lower():
             print("Pruning OOM trial")
@@ -167,9 +181,9 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('data_dir')
-    parser.add_argument('--batch_size', type=int, default=4)
+    parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--workers', type=int, default=4)
-    parser.add_argument('--trials', type=int, default=200)
+    parser.add_argument('--trials', type=int, default=500)
     args = parser.parse_args()
 
     study = optuna.create_study(
@@ -193,4 +207,7 @@ if __name__ == '__main__':
 
     print("  Params: ")
     for key, value in trial.params.items():
+        print("    {}: {}".format(key, value))
+
+    for key, value in trial.user_attrs.items():
         print("    {}: {}".format(key, value))
