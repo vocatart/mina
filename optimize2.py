@@ -191,7 +191,7 @@ if __name__ == "__main__":
         "thresh": tune.quniform(0.3, 0.7, 0.05),
         "muon_lr": tune.loguniform(1e-4, 1e-2),
         "adam_lr": tune.loguniform(1e-4, 1e-2),
-        "pos_weight": tune.uniform(-2.0, 2.0),
+        "pos_weight": tune.uniform(1.0, 3.0),
         "weight_decay": tune.loguniform(1e-4, 1e-1),
         "warmup_steps": tune.choice([0, 100, 200, 300, 400, 500]),
     }
