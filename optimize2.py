@@ -150,7 +150,7 @@ def trainable(config: dict):
                 del model
             except NameError:
                 pass
-            ray.train.report({
+            ray.tune.report({
                 m: float("inf") if mode == "min" else 0.0
                 for m, mode in zip(METRICS, MODES)
             })
