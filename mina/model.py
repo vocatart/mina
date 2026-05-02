@@ -217,7 +217,7 @@ class MINA(lightning.LightningModule):
                 self._log_boundary_visualization(
                     batch['mel'][i][:f_lens], batch['boundaries'][i][:f_lens], outputs.boundary.preds[i][:f_lens], i
                 )
-                self._log_segment_visualization(
+                self._log_phoneme_seg_preds(
                     batch['segment_phonemes'][i], outputs.seg_phoneme.preds[i], i
                 )
 
