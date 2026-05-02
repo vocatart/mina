@@ -36,7 +36,7 @@ class MINA(lightning.LightningModule):
 
         self.register_buffer(
             "b_logit_shift",
-            torch.log(torch.tensor(boundary_threshold / (1 - boundary_threshold))),
+            torch.log(torch.tensor(boundary_threshold / 1 - boundary_threshold)),
         )
 
 
@@ -125,8 +125,8 @@ class MINA(lightning.LightningModule):
             Soft f1 score, shifted to center around decision threshold
         """
 
-        probs = torch.sigmoid(logits - self.b_logit_shift) * valid_mask
-        targets = targets.float()
+        probs = torch.sigmoid(logits - self.b_logit_shift) * valid_mask.unsqueeze(-1)
+        targets = targets.unsqueeze(-1)
 
         tp = (probs * targets).sum()
         fp = (probs * (1 - targets)).sum()
