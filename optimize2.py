@@ -134,6 +134,7 @@ def trainable(config: dict):
             precision="16-mixed",
             max_epochs=150,
             enable_progress_bar=True,
+            num_sanity_val_steps=0,
         )
 
         trainer.fit(model, data_module)
