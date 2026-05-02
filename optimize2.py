@@ -1,5 +1,6 @@
 import argparse
 import gc
+import os
 from pathlib import Path
 import tempfile
 
@@ -210,6 +211,7 @@ if __name__ == "__main__":
 
     ray.init()
 
+    os.mkdir("ray_results")
     tuner = tune.Tuner(
         trainable,
         param_space=param_space,
