@@ -168,7 +168,7 @@ class MINA(lightning.LightningModule):
         seg_ph_out = TaskOutput(sp_loss, segment_logits, segment_phoneme_preds, segment_phoneme_acc, segment_valid_mask, None)
 
         # TODO: these need to be hparams
-        b_loss = b_loss * 1.0
+        b_loss = b_loss * 1.5
         fp_loss = fp_loss * 0.3
         sp_loss = sp_loss * 0.3
 
