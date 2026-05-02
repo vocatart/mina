@@ -203,13 +203,12 @@ class Preprocessor:
             start_idx = max(0, min(seq_len, start_idx))
             end_idx = max(0, min(seq_len, end_idx))
 
-            if 0 < start_idx < seq_len:
-                boundaries[start_idx] = 1
-
             if start_idx < end_idx:
                 phoneme_id = self.phoneme_map.index(interval.mark)
-                frame_phonemes[start_idx:end_idx] = phoneme_id
+                frame_phonemes[start_idx:end_idx + 1] = phoneme_id
                 seg_phoneme_list.append(phoneme_id)
+                if 0 < start_idx < seq_len:
+                    boundaries[start_idx] = 1
 
         return boundaries, frame_phonemes, np.array(seg_phoneme_list, dtype=np.int64)
 
