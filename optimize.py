@@ -187,7 +187,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     study = optuna.create_study(
-        direction='maximize',
+        direction='minimize',
         pruner=optuna.pruners.MedianPruner(),
         storage="sqlite:///db.sqlite3",
         study_name="mina"
