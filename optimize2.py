@@ -196,7 +196,7 @@ if __name__ == "__main__":
         metric=METRICS,
         mode=MODES,
         sampler=optuna.samplers.NSGAIISampler(),
-        storage="sqlite:///db.sqlite3",
+        storage=optuna.storages.RDBStorage("sqlite:///db.sqlite3"),
         study_name="mina",
     )
 
