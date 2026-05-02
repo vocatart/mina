@@ -221,6 +221,7 @@ if __name__ == "__main__":
             search_alg=search_alg,
             scheduler=scheduler,
             num_samples=args.trials,
+            max_concurrent_trials=1,
         ),
         run_config=RunConfig(
             name="mina",
