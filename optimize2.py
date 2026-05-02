@@ -215,7 +215,7 @@ if __name__ == "__main__":
     ray.init(log_to_driver=False)
 
     tuner = tune.Tuner(
-        tune.with_resources(trainable, resources={"gpu": 1, "cpu": 20}),
+        tune.with_resources(trainable, resources={"gpu": 1, "cpu": 1}),
         param_space=param_space,
         tune_config=tune.TuneConfig(
             search_alg=search_alg,
