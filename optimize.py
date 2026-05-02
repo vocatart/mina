@@ -16,7 +16,7 @@ from mina.model import MINA
 from mina.positional_encoding import PositionalEncodingType
 
 
-def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, workers: int) -> float:
+def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, workers: int):
     try:
         # dataset hyperparameters
         # fft has a constraint that it must be higher than the hop length
@@ -58,9 +58,9 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
         pos_weight = trial.suggest_float("pos_weight", -2.0, 2.0)
         weight_decay = trial.suggest_float("weight_decay", 1e-4, 1e-1, log=True)
         warmup_steps = trial.suggest_int("warmup_steps", 0, 500, step=100)
-        b_loss_weight = trial.suggest_float("b_loss_weight", 0.0, 2.0, step=0.05)
-        pf_loss_weight = trial.suggest_float("pf_loss_weight", 0.0, 2.0, step=0.05)
-        ps_loss_weight = trial.suggest_float("ps_loss_weight", 0.0, 2.0, step=0.05)
+        b_loss_weight = trial.suggest_float("b_loss_weight", 1.0, 1.0, step=0.05)
+        pf_loss_weight = trial.suggest_float("pf_loss_weight", 1.0, 1.0, step=0.05)
+        ps_loss_weight = trial.suggest_float("ps_loss_weight", 1.0, 1.0, step=0.05)
 
         loss_weights = (b_loss_weight, pf_loss_weight, ps_loss_weight)
 
@@ -167,7 +167,16 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
         trainer.fit(model, data_module)
         temp_dir.cleanup()
 
-        return trainer.callback_metrics["val/total_loss"].item()
+        return (trainer.callback_metrics["val/total_loss"].item(),
+                trainer.callback_metrics["val/boundary_loss"].item(),
+                trainer.callback_metrics["val/ph_frame_loss"].item(),
+                trainer.callback_metrics["val/ph_seg_loss"].item(),
+                trainer.callback_metrics["val/ph_seg_loss"].item(),
+                trainer.callback_metrics["val/boundary_acc"].item(),
+                trainer.callback_metrics["val/ph_frame_acc"].item(),
+                trainer.callback_metrics["val/ph_seg_acc"].item(),
+                trainer.callback_metrics["val/boundary_f1"].item(),
+                )
     except RuntimeError as e:
         if "out of memory" in str(e).lower():
             print("Pruning OOM trial")
@@ -188,7 +197,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     study = optuna.create_study(
-        direction='minimize',
+        directions=["minimize", "minimize", "minimize", "minimize", "minimize", "minimize", "maximize", "maximize", "maximize"],
         pruner=optuna.pruners.MedianPruner(),
         storage="sqlite:///db.sqlite3",
         study_name="mina"

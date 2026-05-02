@@ -187,8 +187,8 @@ class MINA(lightning.LightningModule):
         self.log("train/ph_frame_loss", outputs.frame_phoneme.loss)
         self.log("train/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("train/seg_phoneme_loss", outputs.seg_phoneme.loss)
-        self.log("train/seg_ph_acc", outputs.seg_phoneme.acc)
+        self.log("train/ph_seg_loss", outputs.seg_phoneme.loss)
+        self.log("train/ph_seg_acc", outputs.seg_phoneme.acc)
 
         self.log("train/total_loss", outputs.total_loss, prog_bar=True)
 
@@ -205,8 +205,8 @@ class MINA(lightning.LightningModule):
         self.log("val/ph_frame_loss", outputs.frame_phoneme.loss)
         self.log("val/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("val/seg_phoneme_loss", outputs.seg_phoneme.loss)
-        self.log("val/seg_ph_acc", outputs.seg_phoneme.acc)
+        self.log("val/ph_seg_loss", outputs.seg_phoneme.loss)
+        self.log("val/ph_seg_acc", outputs.seg_phoneme.acc)
 
         self.log("val/total_loss", outputs.total_loss, prog_bar=True)
 
@@ -236,8 +236,8 @@ class MINA(lightning.LightningModule):
         self.log("test/ph_frame_loss", outputs.frame_phoneme.loss)
         self.log("test/ph_frame_acc", outputs.frame_phoneme.acc)
 
-        self.log("test/seg_phoneme_loss", outputs.seg_phoneme.loss)
-        self.log("test/seg_ph_acc", outputs.seg_phoneme.acc)
+        self.log("test/ph_seg_loss", outputs.seg_phoneme.loss)
+        self.log("test/ph_seg_acc", outputs.seg_phoneme.acc)
 
         self.log("test/total_loss", outputs.total_loss, prog_bar=True)
 
