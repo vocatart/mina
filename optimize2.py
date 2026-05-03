@@ -37,6 +37,7 @@ PRIMARY_MODE = "min"
 
 
 def trainable(config: dict):
+    torch.serialization.add_safe_globals([PositionalEncodingType])
     try:
         sr = config["sr"]
         mels = config["mels"]
