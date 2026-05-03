@@ -3,6 +3,7 @@ import gc
 from pathlib import Path
 
 import lightning
+import numpy as np
 import optuna
 import torch
 from optuna.integration import PyTorchLightningPruningCallback
@@ -15,15 +16,33 @@ from mina.dataset import MinaDataModule
 from mina.model import MINA
 from mina.positional_encoding import PositionalEncodingType
 
+def get_fft(sr: int, mels: int) -> int:
+    """Returns the smallest power of 2 that satisfies the n_fft constraint"""
+    mel_max = 2595 * np.log10(1 + sr / 1400)
+    delta_mel = mel_max / (mels - 1)
+    f_low = 700 * (10 ** (delta_mel / 2596) - 1)
+
+    return 2 ** (sr / f_low).bit_length()
 
 def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, workers: int):
     try:
         # dataset hyperparameters
-        # fft has a constraint that it must be higher than the hop length
+        # hop is either fft // [2 | 4] (librosa vs torchaudio)
+        # n_fft is the smallest multiple of two that fits the mel constraint
         sr = trial.suggest_categorical("sr", [8000, 11025, 22050, 32000, 44100])
         mels = trial.suggest_categorical("mels", [40, 64, 80, 128])
-        hop_length = trial.suggest_categorical("hop_length", [160, 256])
-        n_fft = trial.suggest_categorical("n_fft", [f for f in [400, 512, 1024] if f >= hop_length])
+        hop_denominator = trial.suggest_categorical("hop_denominator", [2, 4])
+        n_fft = get_fft(sr, mels)
+        hop_length = n_fft // hop_denominator
+        trial.set_user_attr("n_fft", n_fft)
+        trial.set_user_attr("hop_length", hop_length)
+
+        fft_ms = (n_fft / sr) * 1000
+        hop_ms = (hop_length / sr) * 1000
+
+        print(f"fft ms: {fft_ms}, hop ms: {hop_ms}")
+        trial.set_user_attr("fft_ms", fft_ms)
+        trial.set_user_attr("hop_ms", hop_ms)
 
         # convolutional hyperparameters (and transformer heads)
         # latent_dim % num_heads == 0
@@ -35,8 +54,9 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
         conv_dropout = trial.suggest_float("conv_dropout", 0.0, 0.5, step=0.05)
 
         latent_dim = num_heads * dim_multiplier * 8
-        trial.set_user_attr("latent_dim", latent_dim)
         receptive_field = 1 + (kernel_size - 1) * num_conv
+
+        trial.set_user_attr("latent_dim", latent_dim)
         trial.set_user_attr("receptive_field", receptive_field)
 
         # transformer hyperparameters
@@ -53,10 +73,10 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
 
         # other hyperparameters
         thresh = trial.suggest_float("thresh", 0.3, 0.7, step=0.05)
-        muon_lr = trial.suggest_float("muon_lr", 1e-4, 1e-2, log=True)
-        adam_lr = trial.suggest_float("adam_lr", 1e-4, 1e-2, log=True)
+        muon_lr = trial.suggest_float("muon_lr", 0.02, 0.0001, log=True)
+        adam_lr = trial.suggest_float("adam_lr", 0.003, 0.0001, log=True)
         pos_weight = trial.suggest_float("pos_weight", 0.0, 2.0)
-        weight_decay = trial.suggest_float("weight_decay", 1e-4, 1e-1, log=True)
+        weight_decay = trial.suggest_float("weight_decay", 0.0001, 0.01, log=True)
         warmup_steps = trial.suggest_int("warmup_steps", 0, 300, step=100)
 
         # b, pf, ps
