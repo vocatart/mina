@@ -6,7 +6,7 @@ import lightning
 import optuna
 import torch
 from optuna.integration import PyTorchLightningPruningCallback
-from lightning.pytorch.callbacks import EarlyStopping
+from lightning.pytorch.callbacks import EarlyStopping, BatchSizeFinder
 
 from binarize import Preprocessor
 import tempfile
@@ -55,14 +55,12 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
         thresh = trial.suggest_float("thresh", 0.3, 0.7, step=0.05)
         muon_lr = trial.suggest_float("muon_lr", 1e-4, 1e-2, log=True)
         adam_lr = trial.suggest_float("adam_lr", 1e-4, 1e-2, log=True)
-        pos_weight = trial.suggest_float("pos_weight", -2.0, 2.0)
+        pos_weight = trial.suggest_float("pos_weight", 0.0, 2.0)
         weight_decay = trial.suggest_float("weight_decay", 1e-4, 1e-1, log=True)
-        warmup_steps = trial.suggest_int("warmup_steps", 0, 500, step=100)
-        b_loss_weight = trial.suggest_float("b_loss_weight", 1.0, 1.0, step=0.05)
-        pf_loss_weight = trial.suggest_float("pf_loss_weight", 1.0, 1.0, step=0.05)
-        ps_loss_weight = trial.suggest_float("ps_loss_weight", 1.0, 1.0, step=0.05)
+        warmup_steps = trial.suggest_int("warmup_steps", 0, 300, step=100)
 
-        loss_weights = (b_loss_weight, pf_loss_weight, ps_loss_weight)
+        # b, pf, ps
+        loss_weights = (1.5, 0.5, 0.5)
 
         temp_dir = tempfile.TemporaryDirectory()
         temp_bin_dir = Path(temp_dir.name) / "bin"
@@ -102,7 +100,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             "val_split": 0.10,
             "time_split": 10,
             "audio_types": ["flac"],
-            "workers": 20,
+            "workers": 30,
         }))
 
         proc.process_audio()
@@ -134,7 +132,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             phoneme_dropout=phoneme_dropout,
             phoneme_map=data_module.phoneme_map,
             vocab_size=data_module.vocab_size,
-            sch_frequency=1,
+            sch_frequency=5,
             loss_weights=loss_weights
         )
 
@@ -145,20 +143,15 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             verbose=True
         )
 
-        pruning_callback = PyTorchLightningPruningCallback(
-            trial=trial,
-            monitor="val/total_loss",
-        )
-
         trainer = lightning.Trainer(
             accelerator="auto",
             devices="auto",
-            callbacks=[pruning_callback, early_stop_callback],
+            callbacks=[early_stop_callback, BatchSizeFinder(mode="binsearch", margin=0.5)],
             logger=True,
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,
             log_every_n_steps=10,
-            check_val_every_n_epoch=1,
+            check_val_every_n_epoch=5,
             precision='16-mixed',
             max_epochs=150,
         )
@@ -185,6 +178,9 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             del model
             raise optuna.exceptions.TrialPruned()
         else:
+            torch.cuda.empty_cache()
+            gc.collect()
+            del model
             raise e
 
 
