@@ -26,6 +26,9 @@ def get_fft(sr: int, mels: int) -> int:
 
 def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_workers: int, epochs: int):
     torch.serialization.add_safe_globals([PositionalEncodingType])
+    torch.backends.cudnn.allow_tf32 = True
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.set_float32_matmul_precision('medium')
     try:
         # dataset hyperparameters
         # hop is either fft // [2 | 4] (librosa vs torchaudio)
