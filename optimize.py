@@ -25,6 +25,7 @@ def get_fft(sr: int, mels: int) -> int:
     return 2 ** int(sr // f_low).bit_length()
 
 def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, workers: int):
+    torch.serialization.add_safe_globals([PositionalEncodingType])
     try:
         # dataset hyperparameters
         # hop is either fft // [2 | 4] (librosa vs torchaudio)
