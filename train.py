@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any
 
 import lightning
 import onnx
@@ -7,7 +8,7 @@ import onnxslim
 import torch
 import argparse
 
-from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, RichModelSummary
+from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, RichModelSummary, BatchSizeFinder
 from lightning.pytorch.loggers import TensorBoardLogger
 
 from mina.dataset import MinaDataModule
@@ -22,7 +23,7 @@ if __name__ == '__main__':
 
     parser.add_argument("data_dir", type=str)
 
-    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--batch_size", type=int, default=None)
     parser.add_argument("--num_workers", type=int, default=4)
 
     parser.add_argument("--conv_dim", type=int, default=256) # d_l
@@ -54,6 +55,7 @@ if __name__ == '__main__':
     parser.add_argument("--pf_loss_weight", type=float, default=0.3)
     parser.add_argument("--ps_loss_weight", type=float, default=0.3)
     parser.add_argument("--phoneme_dropout", type=float, default=0.05)
+    parser.add_argument("--hit_tolerance", type=int, default=1)
 
     args = parser.parse_args()
     bin_data = Path(args.data_dir)
@@ -87,6 +89,7 @@ if __name__ == '__main__':
         phoneme_dropout=args.phoneme_dropout,
         phoneme_map=data_module.phoneme_map,
         loss_weights=(args.b_loss_weight, args.pf_loss_weight, args.ps_loss_weight),
+        hit_tolerance=args.hit_tolerance
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
@@ -108,11 +111,16 @@ if __name__ == '__main__':
 
     logger = TensorBoardLogger(".", name="lightning_logs")
 
+    callbacks: list[Any] = [checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=2)]
+
+    if args.batch_size is None:
+        callbacks.append(BatchSizeFinder(mode="binsearch", margin=0.5))
+
     trainer = lightning.Trainer(
         max_epochs=args.num_epochs,
         accelerator="auto",
         devices="auto",
-        callbacks=[checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=2)],
+        callbacks=callbacks,
         logger=logger,
         gradient_clip_val=1.0,
         accumulate_grad_batches=1,
