@@ -61,7 +61,7 @@ if __name__ == '__main__':
     bin_data = Path(args.data_dir)
     lightning.seed_everything(76_805)
 
-    data_module = MinaDataModule(bin_data, args.batch_size, args.num_workers)
+    data_module = MinaDataModule(bin_data, args.batch_size if args.batch_size is not None else 0, args.num_workers)
     model = MINA(
         d_mel=data_module.n_mels,
         d_l=args.conv_dim,
