@@ -22,7 +22,7 @@ def get_fft(sr: int, mels: int) -> int:
     delta_mel = mel_max / (mels - 1)
     f_low = 700 * (10 ** (delta_mel / 2596) - 1)
 
-    return 2 ** (sr / f_low).bit_length()
+    return 2 ** (sr // f_low).bit_length()
 
 def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, workers: int):
     try:
@@ -73,8 +73,8 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
 
         # other hyperparameters
         thresh = trial.suggest_float("thresh", 0.3, 0.7, step=0.05)
-        muon_lr = trial.suggest_float("muon_lr", 0.02, 0.0001, log=True)
-        adam_lr = trial.suggest_float("adam_lr", 0.003, 0.0001, log=True)
+        muon_lr = trial.suggest_float("muon_lr", 0.0001, 0.02, log=True)
+        adam_lr = trial.suggest_float("adam_lr", 0.0001, 0.003, log=True)
         pos_weight = trial.suggest_float("pos_weight", 0.0, 2.0)
         weight_decay = trial.suggest_float("weight_decay", 0.0001, 0.01, log=True)
         warmup_steps = trial.suggest_int("warmup_steps", 0, 300, step=100)
