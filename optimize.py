@@ -22,7 +22,7 @@ def get_fft(sr: int, mels: int) -> int:
     delta_mel = mel_max / (mels - 1)
     f_low = 700 * (10 ** (delta_mel / 2596) - 1)
 
-    return 2 ** (sr // f_low).bit_length()
+    return 2 ** int(sr // f_low).bit_length()
 
 def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, workers: int):
     try:
