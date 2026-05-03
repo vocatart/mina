@@ -180,14 +180,9 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
         trainer.fit(model, data_module)
         temp_dir.cleanup()
 
-        return (trainer.callback_metrics["val/total_loss"].item(),
-                trainer.callback_metrics["val/boundary_loss"].item(),
-                trainer.callback_metrics["val/ph_frame_loss"].item(),
+        return (trainer.callback_metrics["val/ph_frame_loss"].item(),
                 trainer.callback_metrics["val/ph_seg_loss"].item(),
-                trainer.callback_metrics["val/ph_seg_loss"].item(),
-                trainer.callback_metrics["val/boundary_acc"].item(),
-                trainer.callback_metrics["val/ph_frame_acc"].item(),
-                trainer.callback_metrics["val/ph_seg_acc"].item(),
+                trainer.callback_metrics["val/total_loss"].item(),
                 trainer.callback_metrics["val/boundary_f1"].item(),
                 )
     except RuntimeError as e:
@@ -213,7 +208,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     study = optuna.create_study(
-        directions=["minimize", "minimize", "minimize", "minimize", "minimize", "minimize", "maximize", "maximize", "maximize"],
+        directions=["minimize", "minimize", "minimize", "maximize"],
         pruner=optuna.pruners.MedianPruner(),
         storage="sqlite:///db.sqlite3",
         study_name="mina"
