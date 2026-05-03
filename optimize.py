@@ -24,7 +24,7 @@ def get_fft(sr: int, mels: int) -> int:
 
     return 2 ** int(sr // f_low).bit_length()
 
-def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, workers: int):
+def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_workers: int, epochs: int):
     torch.serialization.add_safe_globals([PositionalEncodingType])
     try:
         # dataset hyperparameters
@@ -121,13 +121,14 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             "val_split": 0.10,
             "time_split": 10,
             "audio_types": ["flac"],
-            "workers": 30,
+            "workers": c_workers,
         }))
 
         proc.process_audio()
         proc.save_metadata()
 
-        data_module = MinaDataModule(temp_bin_dir, batch_size, workers)
+        # batch size will get re-calculated by callback
+        data_module = MinaDataModule(temp_bin_dir, 1, g_workers)
         model = MINA(
             d_mel=mels,
             d_l=conv_dim,
@@ -174,7 +175,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
             log_every_n_steps=10,
             check_val_every_n_epoch=5,
             precision='16-mixed',
-            max_epochs=150,
+            max_epochs=epochs,
         )
 
         trainer.logger.log_hyperparams(hparams)
@@ -203,9 +204,10 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, batch_size: int, worker
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('data_dir')
-    parser.add_argument('--batch_size', type=int, default=8)
-    parser.add_argument('--workers', type=int, default=4)
+    parser.add_argument('--gpu_workers', type=int, default=4)
+    parser.add_argument('--cpu_workers', type=int, default=47)
     parser.add_argument('--trials', type=int, default=500)
+    parser.add_argument('--epochs_per_trial', type=int, default=1000)
     args = parser.parse_args()
 
     study = optuna.create_study(
@@ -216,7 +218,7 @@ if __name__ == '__main__':
     )
 
     study.optimize(
-        lambda trial: objective(trial, args.data_dir, args.batch_size, args.workers),
+        lambda trial: objective(trial, args.data_dir, args.gpu_workers, args.cpu_workers, args.epochs_per_trial),
         n_trials=args.trials,
     )
 
