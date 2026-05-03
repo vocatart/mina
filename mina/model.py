@@ -34,6 +34,8 @@ class MINA(lightning.LightningModule):
         self.boundary_classifier = nn.Linear(d_h, 1)
         self.phoneme_classifier = PhonemeClassifier(d_h, vocab_size, phoneme_dropout)
 
+        self.example_input_array = torch.randn(1, max_len, d_mel)
+
 
     def forward(self, x: torch.Tensor, padding_mask=None, gt_boundaries=None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         x = self.acoustic(x)
@@ -357,11 +359,9 @@ class MINA(lightning.LightningModule):
         """
         self.cpu()
 
-        dummy_mel = torch.zeros(1, self.hparams.max_len, self.acoustic.mel_dim)
-
         torch.onnx.export(
             MinaONNXWrapper(self),
-            (dummy_mel,),
+            (self.example_input_array,),
             path,
             input_names=["mel"],
             output_names=["boundaries", "phonemes"],
