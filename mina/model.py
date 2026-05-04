@@ -131,6 +131,8 @@ class MINA(lightning.LightningModule):
 
     @staticmethod
     def _r1_score(precision: float, recall: float) -> float:
+        if precision == 0.0 or recall == 0.0:
+            return 0.0
         hr = recall * 100
         os = ((recall / precision) - 1) * 100
         r_1 = math.sqrt((100 - hr) ** 2 + os ** 2)
