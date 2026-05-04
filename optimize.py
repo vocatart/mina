@@ -7,7 +7,7 @@ import numpy as np
 import optuna
 import torch
 from optuna.integration import PyTorchLightningPruningCallback
-from lightning.pytorch.callbacks import EarlyStopping, BatchSizeFinder
+from lightning.pytorch.callbacks import EarlyStopping, BatchSizeFinder, Timer
 
 from binarize import Preprocessor
 import tempfile
@@ -84,8 +84,9 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         warmup_steps = trial.suggest_int("warmup_steps", 0, 300, step=100)
         hit_tolerance = trial.suggest_int("hit_tolerance", 1, 3)
 
-        # b, pf, ps
-        loss_weights = (1.5, 0.5, 0.5)
+        # loss weights
+        b_loss = trial.suggest_float("b_loss", 0.5, 3.0)
+        p_loss = trial.suggest_float("p_loss", 0.5, 3.0)
 
         temp_dir = tempfile.TemporaryDirectory()
         temp_bin_dir = Path(temp_dir.name) / "bin"
@@ -112,7 +113,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             weight_decay=weight_decay,
             warmup_steps=warmup_steps,
             phoneme_dropout=phoneme_dropout,
-            loss_weights=loss_weights,
+            loss_weights=(b_loss, p_loss, p_loss),
             hit_tolerance=hit_tolerance,
         )
 
@@ -160,7 +161,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             phoneme_map=data_module.phoneme_map,
             vocab_size=data_module.vocab_size,
             sch_frequency=5,
-            loss_weights=loss_weights,
+            loss_weights=(b_loss, p_loss, p_loss),
             hit_tolerance=hit_tolerance,
         )
 
@@ -168,13 +169,13 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             monitor="val/total_loss",
             patience=3,
             mode='min',
-            verbose=True
+            verbose=False
         )
 
         trainer = lightning.Trainer(
             accelerator="auto",
             devices="auto",
-            callbacks=[early_stop_callback, BatchSizeFinder(mode="binsearch", margin=0.5)],
+            callbacks=[early_stop_callback, BatchSizeFinder(mode="binsearch", margin=0.5), Timer(duration="00:01:00:00")],
             logger=True,
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,
@@ -188,7 +189,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         trainer.fit(model, data_module)
         temp_dir.cleanup()
 
-        return (trainer.callback_metrics["val/total_loss"].item(),
+        return (trainer.callback_metrics["val/ph_frame_loss"].item() + trainer.callback_metrics["val/ph_seg_loss"].item(),
                 trainer.callback_metrics["val/boundary_r"].item())
 
     except RuntimeError as e:
@@ -216,7 +217,6 @@ if __name__ == '__main__':
 
     study = optuna.create_study(
         directions=["minimize", "maximize"],
-        pruner=optuna.pruners.MedianPruner(),
         storage="sqlite:///db.sqlite3",
         study_name="mina"
     )

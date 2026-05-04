@@ -324,7 +324,7 @@ class MINA(lightning.LightningModule):
         gt_tokens = [map.get(idx) for idx in gt_np if idx]
         pred_tokens = [map.get(idx) for idx in pred_np if idx]
 
-        output_str = f"{' '.join(gt_tokens)} \n {' '.join(pred_tokens)}"
+        output_str = f"{' '.join(gt_tokens)}\n{' '.join(pred_tokens)}"
 
         self.logger.experiment.add_text(f"val/segs_{i}", output_str, self.current_epoch)
 
