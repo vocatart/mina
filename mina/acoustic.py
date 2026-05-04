@@ -25,7 +25,7 @@ class MelConvBlock(nn.Module):
 
         return x
 
-class ConvolutionalAcousticEncoder(nn.Module):
+class ConvAcousticEncoder(nn.Module):
     """Convolutional encoder for extracting mel features"""
     def __init__(self, mel_dim: int, latent_dim: int, hidden_dim: int,
                  num_conv_layers: int, kernel_size: int, dropout: float) -> None:
