@@ -82,6 +82,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         pos_weight = trial.suggest_float("pos_weight", 0.0, 2.0)
         weight_decay = trial.suggest_float("weight_decay", 0.0001, 0.01, log=True)
         warmup_steps = trial.suggest_int("warmup_steps", 0, 300, step=100)
+        hit_tolerance = trial.suggest_int("hit_tolerance", 1, 3)
 
         # b, pf, ps
         loss_weights = (1.5, 0.5, 0.5)
@@ -112,6 +113,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             warmup_steps=warmup_steps,
             phoneme_dropout=phoneme_dropout,
             loss_weights=loss_weights,
+            hit_tolerance=hit_tolerance,
         )
 
         proc = Preprocessor(argparse.Namespace(**{
@@ -158,7 +160,8 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             phoneme_map=data_module.phoneme_map,
             vocab_size=data_module.vocab_size,
             sch_frequency=5,
-            loss_weights=loss_weights
+            loss_weights=loss_weights,
+            hit_tolerance=hit_tolerance,
         )
 
         early_stop_callback = EarlyStopping(
@@ -188,7 +191,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         return (trainer.callback_metrics["val/ph_frame_loss"].item(),
                 trainer.callback_metrics["val/ph_seg_loss"].item(),
                 trainer.callback_metrics["val/total_loss"].item(),
-                trainer.callback_metrics["val/boundary_f1"].item(),
+                trainer.callback_metrics["val/boundary_r"].item(),
                 )
     except RuntimeError as e:
         if "out of memory" in str(e).lower():
@@ -227,14 +230,16 @@ if __name__ == '__main__':
 
     print("Number of finished trials: {}".format(len(study.trials)))
 
-    print("Best trial:")
-    trial = study.best_trial
+    print("Best trials:\n")
+    trials = study.best_trials
 
-    print("  Value: {}".format(trial.value))
+    for trial in trials:
+        print("Trial number: {}".format(trial.number))
+        print("  Value: {}".format(trial.value))
 
-    print("  Params: ")
-    for key, value in trial.params.items():
-        print("    {}: {}".format(key, value))
+        print("  Params: ")
+        for key, value in trial.params.items():
+            print("    {}: {}".format(key, value))
 
-    for key, value in trial.user_attrs.items():
-        print("    {}: {}".format(key, value))
+        for key, value in trial.user_attrs.items():
+            print("    {}: {}".format(key, value))
