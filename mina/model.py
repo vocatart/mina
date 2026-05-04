@@ -136,7 +136,7 @@ class MINA(lightning.LightningModule):
         return 2 * precision * recall / (precision + recall + EPSILON)
 
     @staticmethod
-    def _r1_score(precision: float, recall: float) -> float:
+    def _r_value(precision: float, recall: float) -> float:
         if precision == 0.0 or recall == 0.0:
             return 0.0
         hr = recall * 100
@@ -172,7 +172,7 @@ class MINA(lightning.LightningModule):
 
         precision_sum = 0.0
         recall_sum = 0.0
-        r1_sum = 0.0
+        r_sum = 0.0
         boundary_preds_cpu = boundary_preds.cpu()
         bounds_cpu = bounds.cpu()
         valid_mask_cpu = valid_mask.cpu()
@@ -180,15 +180,16 @@ class MINA(lightning.LightningModule):
             mask = valid_mask_cpu[i]
             pred_idx = boundary_preds_cpu[i][mask].nonzero(as_tuple=True)[0].float()
             gt_idx = bounds_cpu[i][mask].nonzero(as_tuple=True)[0].float()
+
             prec = self._sequential_hit_metric(pred_idx, gt_idx)
             rec = self._sequential_hit_metric(gt_idx, pred_idx)
+
             precision_sum += prec
             recall_sum += rec
-            r1_sum += self._r1_score(prec, rec)
 
-        boundary_precision = precision_sum / boundary_preds.size(0)
-        boundary_recall = recall_sum / boundary_preds.size(0)
-        boundary_r1 = r1_sum / boundary_preds.size(0)
+            r_sum += self._r_value(prec, rec)
+
+        boundary_r = r_sum / boundary_preds.size(0)
 
         frame_phoneme_preds = torch.argmax(phoneme_logits, dim=-1)
         frame_phoneme_acc = ((frame_phoneme_preds == frame_phonemes) & valid_mask).float().sum() / valid_mask.float().sum()
@@ -196,7 +197,7 @@ class MINA(lightning.LightningModule):
         segment_phoneme_preds = torch.argmax(segment_logits, dim=-1)
         segment_phoneme_acc = ((segment_phoneme_preds == segment_phonemes) & segment_valid_mask).float().sum() / segment_valid_mask.float().sum()
 
-        bound_out = TaskOutput(b_loss, boundary_logits, boundary_preds, boundary_acc, valid_mask, boundary_r1)
+        bound_out = TaskOutput(b_loss, boundary_logits, boundary_preds, boundary_acc, valid_mask, boundary_r)
         frame_ph_out = TaskOutput(fp_loss, phoneme_logits, frame_phoneme_preds, frame_phoneme_acc, valid_mask, None)
         seg_ph_out = TaskOutput(sp_loss, segment_logits, segment_phoneme_preds, segment_phoneme_acc, segment_valid_mask, None)
 
@@ -214,7 +215,7 @@ class MINA(lightning.LightningModule):
 
         self.log("train/boundary_loss", outputs.boundary.loss)
         self.log("train/boundary_acc", outputs.boundary.acc)
-        self.log("train/boundary_r1", outputs.boundary.r1)
+        self.log("train/boundary_r", outputs.boundary.r)
 
         self.log("train/ph_frame_loss", outputs.frame_phoneme.loss)
         self.log("train/ph_frame_acc", outputs.frame_phoneme.acc)
@@ -231,7 +232,7 @@ class MINA(lightning.LightningModule):
 
         self.log("val/boundary_loss", outputs.boundary.loss)
         self.log("val/boundary_acc", outputs.boundary.acc)
-        self.log("val/boundary_r1", outputs.boundary.r1)
+        self.log("val/boundary_r", outputs.boundary.r)
 
         self.log("val/ph_frame_loss", outputs.frame_phoneme.loss)
         self.log("val/ph_frame_acc", outputs.frame_phoneme.acc)
@@ -247,6 +248,7 @@ class MINA(lightning.LightningModule):
             for i in range(min(len(batch['mel']), 10)):
                 f_lens = frame_lengths[i].item()
                 s_lens = segment_lengths[i].item()
+
                 self._log_boundary_visualization(
                     batch['mel'][i][:f_lens], batch['boundaries'][i][:f_lens], outputs.boundary.preds[i][:f_lens], i
                 )
@@ -261,7 +263,7 @@ class MINA(lightning.LightningModule):
 
         self.log("test/boundary_loss", outputs.boundary.loss)
         self.log("test/boundary_acc", outputs.boundary.acc)
-        self.log("test/boundary_r1", outputs.boundary.r1)
+        self.log("test/boundary_r", outputs.boundary.r)
 
         self.log("test/ph_frame_loss", outputs.frame_phoneme.loss)
         self.log("test/ph_frame_acc", outputs.frame_phoneme.acc)
@@ -425,5 +427,5 @@ class TaskOutput(NamedTuple):
     preds: torch.Tensor
     acc: torch.Tensor
     valid_mask: torch.Tensor
-    r1: float | None
+    r: float | None
 
