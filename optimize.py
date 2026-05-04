@@ -166,7 +166,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
 
         early_stop_callback = EarlyStopping(
             monitor="val/total_loss",
-            patience=10,
+            patience=3,
             mode='min',
             verbose=True
         )
