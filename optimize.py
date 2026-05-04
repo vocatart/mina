@@ -188,11 +188,9 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         trainer.fit(model, data_module)
         temp_dir.cleanup()
 
-        return (trainer.callback_metrics["val/ph_frame_loss"].item(),
-                trainer.callback_metrics["val/ph_seg_loss"].item(),
-                trainer.callback_metrics["val/total_loss"].item(),
-                trainer.callback_metrics["val/boundary_r"].item(),
-                )
+        return (trainer.callback_metrics["val/total_loss"].item(),
+                trainer.callback_metrics["val/boundary_r"].item())
+
     except RuntimeError as e:
         if "out of memory" in str(e).lower():
             print("Pruning OOM trial")
@@ -217,7 +215,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     study = optuna.create_study(
-        directions=["minimize", "minimize", "minimize", "maximize"],
+        directions=["minimize", "maximize"],
         pruner=optuna.pruners.MedianPruner(),
         storage="sqlite:///db.sqlite3",
         study_name="mina"
