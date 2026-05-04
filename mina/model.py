@@ -113,17 +113,23 @@ class MINA(lightning.LightningModule):
         return b_l, fp_l, sp_l
 
     def _sequential_hit_metric(self, a: torch.Tensor, b: torch.Tensor) -> float:
-        pop_mask = torch.zeros(b.size(0), dtype=torch.bool, device=b.device)
+        if a.size(0) == 0 or b.size(0) == 0:
+            return 0.0
+
+        a = a.tolist()
+        b = b.tolist()
+        tol = self.hparams.hit_tolerance
         n_hits = 0
+        j = 0
 
-        for i in range(a.size(0)):
-            for j in range(b.size(0)):
-                if not pop_mask[j] and abs(a[i] - b[j]) <= self.hparams.hit_tolerance:
-                    n_hits += 1
-                    pop_mask[j] = True
-                    break
+        for i in range(len(a)):
+            while j < len(b) and b[j] < a[i] - tol:
+                j += 1
+            if j < len(b) and abs(a[i] - b[j]) <= tol:
+                n_hits += 1
+                j += 1
 
-        return n_hits / max(a.size(0), 1)
+        return n_hits / len(a)
 
     @staticmethod
     def _f1_score(precision: torch.Tensor, recall: torch.Tensor) -> torch.Tensor:
@@ -166,16 +172,23 @@ class MINA(lightning.LightningModule):
 
         precision_sum = 0.0
         recall_sum = 0.0
-        for i in range(boundary_preds.size(0)):
-            mask = valid_mask[i]
-            pred_idx = boundary_preds[i][mask].nonzero(as_tuple=True)[0].float()
-            gt_idx = bounds[i][mask].nonzero(as_tuple=True)[0].float()
-            precision_sum += self._sequential_hit_metric(pred_idx, gt_idx)
-            recall_sum += self._sequential_hit_metric(gt_idx, pred_idx)
+        r1_sum = 0.0
+        boundary_preds_cpu = boundary_preds.cpu()
+        bounds_cpu = bounds.cpu()
+        valid_mask_cpu = valid_mask.cpu()
+        for i in range(boundary_preds_cpu.size(0)):
+            mask = valid_mask_cpu[i]
+            pred_idx = boundary_preds_cpu[i][mask].nonzero(as_tuple=True)[0].float()
+            gt_idx = bounds_cpu[i][mask].nonzero(as_tuple=True)[0].float()
+            prec = self._sequential_hit_metric(pred_idx, gt_idx)
+            rec = self._sequential_hit_metric(gt_idx, pred_idx)
+            precision_sum += prec
+            recall_sum += rec
+            r1_sum += self._r1_score(prec, rec)
 
         boundary_precision = precision_sum / boundary_preds.size(0)
         boundary_recall = recall_sum / boundary_preds.size(0)
-        boundary_r1 = self._r1_score(boundary_precision, boundary_recall)
+        boundary_r1 = r1_sum / boundary_preds.size(0)
 
         frame_phoneme_preds = torch.argmax(phoneme_logits, dim=-1)
         frame_phoneme_acc = ((frame_phoneme_preds == frame_phonemes) & valid_mask).float().sum() / valid_mask.float().sum()

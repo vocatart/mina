@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     logger = TensorBoardLogger(".", name="lightning_logs")
 
-    callbacks: list[Any] = [checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=2)]
+    callbacks: list[Any] = [checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=1)]
 
     if args.batch_size is None:
         callbacks.append(BatchSizeFinder(mode="binsearch", margin=0.5))
