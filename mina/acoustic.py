@@ -6,19 +6,19 @@ class MelConvBlock(nn.Module):
     def __init__(self, latent_dim: int, kernel_size: int, dropout: float) -> None:
         super().__init__()
 
-        self.conv = nn.Conv1d(latent_dim, latent_dim, kernel_size, padding="same")
         self.norm = nn.LayerNorm(latent_dim)
+        self.conv = nn.Conv1d(latent_dim, latent_dim, kernel_size, padding="same")
         self.activation = nn.GELU()
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         skip = x
 
-        x_conv = x.transpose(1, 2)
+        x_conv = self.norm(x)
+        x_conv = x_conv.transpose(1, 2)
         x_conv = self.conv(x_conv)
         x_conv = x_conv.transpose(1, 2)
-        x_conv = self.norm(x_conv)
-
+        
         x = x_conv + skip
         x = self.activation(x)
         x = self.dropout(x)
