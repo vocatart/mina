@@ -27,11 +27,11 @@ class MINA(lightning.LightningModule):
                  boundary_threshold: float, pe_type: PositionalEncodingType, vocab_size: int,
                  weight_decay: float, warmup_steps: int, sch_frequency: int, do_compile: bool,
                  phoneme_map: dict[int, str], loss_weights: tuple[float, float, float],
-                 hit_tolerance: float):
+                 hit_tolerance: float, num_conv_heads: int):
         super().__init__()
         self.save_hyperparameters()
 
-        self.acoustic = ConvAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv)
+        self.acoustic = ConvAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv, num_heads)
         self.temporal = TemporalContextEncoder(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
         self.boundary_classifier = nn.Linear(d_h, 1)
         self.phoneme_classifier = PhonemeClassifier(d_h, vocab_size, phoneme_dropout)
