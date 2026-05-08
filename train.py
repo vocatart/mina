@@ -116,7 +116,7 @@ if __name__ == '__main__':
     callbacks: list[Any] = [checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=1)]
 
     if args.batch_size is None:
-        callbacks.append(BatchSizeFinder(mode="binsearch", margin=0.5))
+        callbacks.append(BatchSizeFinder(mode="binsearch", margin=0.6))
 
     trainer = lightning.Trainer(
         max_epochs=args.num_epochs,
