@@ -8,7 +8,7 @@ class MelConvBlock(nn.Module):
 
         self.conv = nn.Conv1d(latent_dim, latent_dim, kernel_size, padding="same")
         self.norm = nn.LayerNorm(latent_dim)
-        self.activation = nn.ReLU()
+        self.activation = nn.GELU()
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
