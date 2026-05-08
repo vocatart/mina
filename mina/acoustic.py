@@ -17,7 +17,7 @@ class MelConvBlock(nn.Module):
         self.sne = nn.Sequential(
             nn.Linear(latent_dim, latent_dim // reduction),
             nn.ReLU(),
-            nn.Linear(latent_dim // reduction, reduction),
+            nn.Linear(latent_dim // reduction, latent_dim),
             nn.Sigmoid()
         )
 
@@ -32,7 +32,7 @@ class MelConvBlock(nn.Module):
         x_conv = self.conv(x_conv)
         x_conv = x_conv.transpose(1, 2)
 
-        sne = self.sne(x.mean(dim=1, keepdim=True))
+        sne = self.sne(x_conv.mean(dim=1, keepdim=True))
         x_conv = sne * x_conv
 
         x = x_conv + skip
@@ -52,7 +52,7 @@ class ConvAcousticEncoder(nn.Module):
         self.input = nn.Sequential(
             nn.Linear(mel_dim, latent_dim),
             nn.LayerNorm(latent_dim),
-            nn.ReLU()
+            nn.GELU()
         )
 
         self.conv_block = nn.Sequential(*[
