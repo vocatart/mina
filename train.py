@@ -30,6 +30,7 @@ if __name__ == '__main__':
     parser.add_argument("--latent_dim", type=int, default=128) # d_h
     parser.add_argument("--num_conv", type=int, default=5)
     parser.add_argument("--num_heads", type=int, default=4)
+    parser.add_argument("--num_conv_heads", type=int, default=4)
     parser.add_argument("--tf_layers", type=int, default=4)
     parser.add_argument("--tf_dim_ff", type=int, default=256)
     parser.add_argument("--kernel_size", type=int, default=3)
@@ -89,7 +90,8 @@ if __name__ == '__main__':
         phoneme_dropout=args.phoneme_dropout,
         phoneme_map=data_module.phoneme_map,
         loss_weights=(args.b_loss_weight, args.pf_loss_weight, args.ps_loss_weight),
-        hit_tolerance=args.hit_tolerance
+        hit_tolerance=args.hit_tolerance,
+        num_conv_heads=args.num_conv_heads
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
