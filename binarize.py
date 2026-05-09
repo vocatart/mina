@@ -95,7 +95,7 @@ class Preprocessor:
         self.total_length = total_length
         self.longest_seen_sequence = longest_seen_sequence
 
-    def process_single_audio(self, audio_file: Path) -> tuple[float, int | Any]:
+    def process_single_audio(self, audio_file: Path) -> tuple[float, int]:
         """
         Binarize single audio file
 
@@ -103,17 +103,18 @@ class Preprocessor:
             audio_file (Path): Audio file path
         """
 
-        audio_length = self.get_dur(audio_file)
+        y, _ = librosa.load(audio_file, sr=self.sr)
+        audio_length = len(y) / self.sr
+
         current_pos = 0.0
         slice_idx = 0
         max_seq_len = 0
 
         tg = textgrid.TextGrid.fromFile(str(audio_file.with_suffix(".TextGrid")))
+        rel_stem = str(audio_file.relative_to(self.db).with_suffix("")).replace(os.sep, "_")
 
         while current_pos < audio_length:
             closest_time = self.snap_to_next_interval(tg, current_pos, audio_length)
-
-            y, _ = librosa.load(audio_file, sr=self.sr, offset=current_pos, duration=(closest_time - current_pos))
 
             min_duration = self.n_fft / self.sr
             if closest_time - current_pos < min_duration:
@@ -121,14 +122,17 @@ class Preprocessor:
                 slice_idx += 1
                 continue
 
-            mel_dbs = self.get_mel(y)
+            start_sample = int(current_pos * self.sr)
+            end_sample = int(closest_time * self.sr)
+            mel_dbs = self.get_mel(y[start_sample:end_sample])
 
             seq_len = len(mel_dbs)
             max_seq_len = max(max_seq_len, seq_len)
 
             boundaries, frame_phonemes, segment_phonemes = self.get_boundaries_and_phonemes(tg, seq_len, current_pos)
 
-            with open(os.path.join(self.out, os.path.basename(audio_file) + str(slice_idx) + ".npz"), "wb") as f:
+            out_path = self.out / f"{rel_stem}_{slice_idx}.npz"
+            with open(out_path, "wb") as f:
                 np.savez(f, mel=mel_dbs, bounds=boundaries, frame_phonemes=frame_phonemes, segment_phonemes=segment_phonemes)
 
             current_pos = closest_time
@@ -241,7 +245,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--time_split", type=int, default=10, help="Audio segment length")
     parser.add_argument("--val_split", type=float, default=0.1, help="Validation split")
-    parser.add_argument("--audio_types", nargs="+", type=str, help="Audio types to look for")
+    parser.add_argument("--audio_types", nargs="+", type=str, default=["wav"], help="Audio types to look for")
     parser.add_argument("--workers", type=int, default=16, help="Number of workers")
 
     proc = Preprocessor(parser.parse_args())
