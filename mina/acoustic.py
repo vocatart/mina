@@ -68,8 +68,9 @@ class ConvAcousticEncoder(nn.Module):
         x = self.input(x)
         x = self.conv_block(x)
 
-        attn_out, _ = self.attn(x, x, x)
-        x = self.attn_norm(x + attn_out)
+        attn_x = self.attn_norm(x)
+        attn_out, _ = self.attn(attn_x, attn_x, attn_x)
+        x = x + attn_out
 
         x = self.output(x)
         return x
