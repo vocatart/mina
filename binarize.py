@@ -149,8 +149,7 @@ class Preprocessor:
             Duration corresponding to the ending of the next interval from the input duration
         """
 
-        # TODO: assumes phonemes are on tier 0 (they usually are)
-        tier = tg.tiers[0]
+        tier = tg.getFirst("phone")
         target_time = position + self.time_split
 
         for interval in tier.intervals:
@@ -190,8 +189,7 @@ class Preprocessor:
             offset (float): Current position in file
         """
 
-        # TODO: assumes phonemes are on tier 0 (they usually are)
-        tier = tg.tiers[0]
+        tier = tg.getFirst("phone")
         boundaries = np.zeros(seq_len, dtype=np.int64)
         frame_phonemes = np.zeros(seq_len, dtype=np.int64)
 
