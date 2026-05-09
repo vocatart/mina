@@ -46,7 +46,7 @@ class Preprocessor:
         phoneme_idx = list()
         for audio_file in self.audio_files:
             tg = textgrid.TextGrid.fromFile(audio_file.with_suffix(".TextGrid"))
-            tier = tg[0]
+            tier = tg.getFirst("phone")
             for interval in tier.intervals:
                 phoneme_idx.append(interval.mark)
 
