@@ -35,8 +35,8 @@ class MelConvBlock(nn.Module):
         sne = self.sne(x_conv.mean(dim=1, keepdim=True))
         x_conv = sne * x_conv
 
+        x_conv = self.dropout(x_conv)
         x = x_conv + skip
-        x = self.dropout(x)
 
         return x
 
@@ -68,7 +68,7 @@ class ConvAcousticEncoder(nn.Module):
         x = self.conv_block(x)
 
         attn_x = self.attn_norm(x)
-        attn_out, _ = self.attn(attn_x, attn_x, attn_x, padding_mask=padding_mask)
+        attn_out, _ = self.attn(attn_x, attn_x, attn_x, key_padding_mask=padding_mask)
         x = x + attn_out
 
         x = self.output(x)

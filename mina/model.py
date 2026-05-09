@@ -31,8 +31,8 @@ class MINA(lightning.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.acoustic = ConvAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv, num_heads)
-        self.temporal = TemporalContextEncoder(d_h, num_conv_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
+        self.acoustic = ConvAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv, num_conv_heads)
+        self.temporal = TemporalContextEncoder(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
         self.boundary_classifier = nn.Linear(d_h, 1)
         self.phoneme_classifier = PhonemeClassifier(d_h, vocab_size, phoneme_dropout)
 
@@ -40,7 +40,7 @@ class MINA(lightning.LightningModule):
 
 
     def forward(self, x: torch.Tensor, padding_mask=None, gt_boundaries=None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        x = self.acoustic(x, passing_mask=padding_mask)
+        x = self.acoustic(x, padding_mask=padding_mask)
         x = self.temporal(x, padding_mask=padding_mask)
 
         boundary_logits = self.boundary_classifier(x).squeeze(-1)
