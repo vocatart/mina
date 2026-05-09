@@ -11,6 +11,7 @@ class MelConvBlock(nn.Module):
 
         self.conv = nn.Sequential(
             nn.Conv1d(latent_dim, latent_dim, kernel_size, padding="same", dilation=dilation, groups=latent_dim),
+            nn.GELU(),
             nn.Conv1d(latent_dim, latent_dim, 1)
         )
 
@@ -21,7 +22,6 @@ class MelConvBlock(nn.Module):
             nn.Sigmoid()
         )
 
-        self.activation = nn.GELU()
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -36,7 +36,6 @@ class MelConvBlock(nn.Module):
         x_conv = sne * x_conv
 
         x = x_conv + skip
-        x = self.activation(x)
         x = self.dropout(x)
 
         return x
@@ -64,12 +63,12 @@ class ConvAcousticEncoder(nn.Module):
 
         self.output = nn.Linear(latent_dim, hidden_dim)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, padding_mask=None) -> torch.Tensor:
         x = self.input(x)
         x = self.conv_block(x)
 
         attn_x = self.attn_norm(x)
-        attn_out, _ = self.attn(attn_x, attn_x, attn_x)
+        attn_out, _ = self.attn(attn_x, attn_x, attn_x, padding_mask=padding_mask)
         x = x + attn_out
 
         x = self.output(x)
