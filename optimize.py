@@ -175,7 +175,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         trainer = lightning.Trainer(
             accelerator="auto",
             devices="auto",
-            callbacks=[early_stop_callback, BatchSizeFinder(mode="binsearch", margin=0.5), Timer(duration="00:01:00:00")],
+            callbacks=[early_stop_callback, BatchSizeFinder(mode="binsearch", margin=0.5), Timer(duration="00:02:00:00")],
             logger=True,
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,

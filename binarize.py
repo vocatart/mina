@@ -46,7 +46,7 @@ class Preprocessor:
         phoneme_idx = list()
         for audio_file in self.audio_files:
             tg = textgrid.TextGrid.fromFile(audio_file.with_suffix(".TextGrid"))
-            tier = tg[1]
+            tier = tg[0]
             for interval in tier.intervals:
                 phoneme_idx.append(interval.mark)
 
@@ -153,7 +153,7 @@ class Preprocessor:
             Duration corresponding to the ending of the next interval from the input duration
         """
 
-        tier = tg[1]
+        tier = tg[0]
         target_time = position + self.time_split
 
         for interval in tier.intervals:
@@ -193,7 +193,7 @@ class Preprocessor:
             offset (float): Current position in file
         """
 
-        tier = tg[1]
+        tier = tg[0]
         boundaries = np.zeros(seq_len, dtype=np.int64)
         frame_phonemes = np.zeros(seq_len, dtype=np.int64)
 
