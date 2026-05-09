@@ -53,6 +53,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         conv_dim = trial.suggest_categorical("conv_dim", [64, 128, 256])
         num_conv = trial.suggest_int("num_conv", 2, 6)
         num_heads = trial.suggest_categorical("num_heads", [2, 4, 8])
+        num_conv_heads = trial.suggest_categorical("num_conv_heads", [2, 4, 8])
         dim_multiplier = trial.suggest_int("dim_multiplier", 2, 6)
         kernel_size = trial.suggest_categorical("kernel_size", [3, 5, 7])
         conv_dropout = trial.suggest_float("conv_dropout", 0.0, 0.5, step=0.05)
@@ -163,6 +164,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             sch_frequency=5,
             loss_weights=(b_loss, p_loss, p_loss),
             hit_tolerance=hit_tolerance,
+            num_conv_heads=num_conv_heads,
         )
 
         early_stop_callback = EarlyStopping(
