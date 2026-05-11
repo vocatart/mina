@@ -160,7 +160,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             phoneme_dropout=phoneme_dropout,
             phoneme_map=data_module.phoneme_map,
             vocab_size=data_module.vocab_size,
-            sch_frequency=5,
+            sch_frequency=1,
             loss_weights=(b_loss, p_loss, p_loss),
             hit_tolerance=hit_tolerance,
             num_conv_heads=num_conv_heads,
@@ -181,7 +181,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,
             log_every_n_steps=10,
-            check_val_every_n_epoch=5,
+            check_val_every_n_epoch=1,
             precision='16-mixed',
             max_epochs=epochs,
         )
