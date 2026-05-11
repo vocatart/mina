@@ -176,7 +176,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         trainer = lightning.Trainer(
             accelerator="auto",
             devices="auto",
-            callbacks=[early_stop_callback, Timer(duration="00:03:00:00"), PyTorchLightningPruningCallback],
+            callbacks=[early_stop_callback, Timer(duration="00:03:00:00"), PyTorchLightningPruningCallback(trial, monitor="val/boundary_r")],
             logger=True,
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,
