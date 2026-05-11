@@ -134,7 +134,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         proc.process_audio()
         proc.save_metadata()
 
-        data_module = MinaDataModule(temp_bin_dir, 32, g_workers)
+        data_module = MinaDataModule(temp_bin_dir, 8, g_workers)
         model = MINA(
             d_mel=mels,
             d_l=conv_dim,
