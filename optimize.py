@@ -219,7 +219,8 @@ if __name__ == '__main__':
         direction='maximize',
         pruner=optuna.pruners.HyperbandPruner(),
         storage="sqlite:///db.sqlite3",
-        study_name="mina"
+        study_name="mina",
+        load_if_exists=True
     )
 
     study.optimize(
