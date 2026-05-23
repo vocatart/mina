@@ -18,6 +18,7 @@ from mina.positional_encoding import PositionalEncodingType
 
 if __name__ == '__main__':
     torch.serialization.add_safe_globals([PositionalEncodingType])
+    torch._dynamo.config.capture_scalar_outputs = True
     torch.set_float32_matmul_precision('medium')
 
     parser = argparse.ArgumentParser()
