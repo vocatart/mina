@@ -51,7 +51,7 @@ if __name__ == '__main__':
     parser.add_argument("--num_epochs", type=int, default=1000)
     parser.add_argument("--pos_weight", type=float, default=1.01)
     parser.add_argument("--warmup_steps", type=int, default=100)
-    parser.add_argument("--val_n_epochs", type=int, default=10)
+    parser.add_argument("--val_n_epochs", type=int, default=5)
     parser.add_argument("--no_compile", action="store_false")
     parser.add_argument("--b_loss_weight", type=float, default=2.63)
     parser.add_argument("--pf_loss_weight", type=float, default=0.55)
