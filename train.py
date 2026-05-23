@@ -10,6 +10,7 @@ import argparse
 
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, RichModelSummary, BatchSizeFinder
 from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.core.saving import save_hparams_to_yaml
 
 from mina.dataset import MinaDataModule
 from mina.model import MINA
@@ -142,8 +143,10 @@ if __name__ == '__main__':
     best_model_path = checkpoint_callback.best_model_path
     best_model_dir = os.path.dirname(best_model_path)
     onnx_path = os.path.join(best_model_dir, "mina.onnx")
+    hparams_path = os.path.join(best_model_dir, "hparams.yaml")
 
     best_model = MINA.load_from_checkpoint(checkpoint_path=best_model_path)
     best_model.eval()
     best_model.export(onnx_path)
     onnx.save(onnxslim.slim(onnx.load(onnx_path)), onnx_path)
+    save_hparams_to_yaml(config_yaml=hparams_path, hparams=trainer.model.hparams)
