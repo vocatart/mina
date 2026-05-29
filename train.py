@@ -10,6 +10,7 @@ import argparse
 
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, RichModelSummary, BatchSizeFinder
 from lightning.pytorch.loggers import TensorBoardLogger
+from lightning.pytorch.core.saving import save_hparams_to_yaml
 
 from mina.dataset import MinaDataModule
 from mina.model import MINA
@@ -17,6 +18,7 @@ from mina.positional_encoding import PositionalEncodingType
 
 if __name__ == '__main__':
     torch.serialization.add_safe_globals([PositionalEncodingType])
+    torch._dynamo.config.capture_scalar_outputs = True
     torch.set_float32_matmul_precision('medium')
 
     parser = argparse.ArgumentParser()
@@ -28,15 +30,15 @@ if __name__ == '__main__':
 
     parser.add_argument("--conv_dim", type=int, default=256) # d_l
     parser.add_argument("--latent_dim", type=int, default=128) # d_h
-    parser.add_argument("--num_conv", type=int, default=5)
+    parser.add_argument("--num_conv", type=int, default=3)
     parser.add_argument("--num_heads", type=int, default=4)
-    parser.add_argument("--num_conv_heads", type=int, default=4)
-    parser.add_argument("--tf_layers", type=int, default=4)
-    parser.add_argument("--tf_dim_ff", type=int, default=256)
-    parser.add_argument("--kernel_size", type=int, default=3)
-    parser.add_argument("--conv_dropout", type=float, default=0.25)
-    parser.add_argument("--transformer_dropout", type=float, default=0.05)
-    parser.add_argument("--thresh", type=float, default=0.6)
+    parser.add_argument("--num_conv_heads", type=int, default=2)
+    parser.add_argument("--tf_layers", type=int, default=3)
+    parser.add_argument("--tf_dim_ff", type=int, default=768)
+    parser.add_argument("--kernel_size", type=int, default=5)
+    parser.add_argument("--conv_dropout", type=float, default=0.3)
+    parser.add_argument("--transformer_dropout", type=float, default=0.1)
+    parser.add_argument("--thresh", type=float, default=0.5)
     parser.add_argument(
         "--pe_type",
         type=PositionalEncodingType,
@@ -44,19 +46,19 @@ if __name__ == '__main__':
         default=PositionalEncodingType.ROPE,
     )
 
-    parser.add_argument("--lr_muon", type=float, default=1.7e-3)
-    parser.add_argument("--lr_adam", type=float, default=1.0e-3)
-    parser.add_argument("--weight_decay", type=float, default=1e-4)
+    parser.add_argument("--lr_muon", type=float, default=2.9e-3)
+    parser.add_argument("--lr_adam", type=float, default=4.8e-4)
+    parser.add_argument("--weight_decay", type=float, default=4.4e-3)
     parser.add_argument("--num_epochs", type=int, default=1000)
-    parser.add_argument("--pos_weight", type=float, default=1.9)
-    parser.add_argument("--warmup_steps", type=int, default=200)
-    parser.add_argument("--val_n_epochs", type=int, default=10)
+    parser.add_argument("--pos_weight", type=float, default=1.01)
+    parser.add_argument("--warmup_steps", type=int, default=100)
+    parser.add_argument("--val_n_epochs", type=int, default=5)
     parser.add_argument("--no_compile", action="store_false")
-    parser.add_argument("--b_loss_weight", type=float, default=1.0)
-    parser.add_argument("--pf_loss_weight", type=float, default=0.3)
-    parser.add_argument("--ps_loss_weight", type=float, default=0.3)
-    parser.add_argument("--phoneme_dropout", type=float, default=0.05)
-    parser.add_argument("--hit_tolerance", type=int, default=1)
+    parser.add_argument("--b_loss_weight", type=float, default=2.63)
+    parser.add_argument("--pf_loss_weight", type=float, default=0.55)
+    parser.add_argument("--ps_loss_weight", type=float, default=0.55)
+    parser.add_argument("--phoneme_dropout", type=float, default=0.45)
+    parser.add_argument("--hit_tolerance", type=int, default=2)
 
     args = parser.parse_args()
     bin_data = Path(args.data_dir)
@@ -142,8 +144,10 @@ if __name__ == '__main__':
     best_model_path = checkpoint_callback.best_model_path
     best_model_dir = os.path.dirname(best_model_path)
     onnx_path = os.path.join(best_model_dir, "mina.onnx")
+    hparams_path = os.path.join(best_model_dir, "hparams.yaml")
 
     best_model = MINA.load_from_checkpoint(checkpoint_path=best_model_path)
     best_model.eval()
     best_model.export(onnx_path)
     onnx.save(onnxslim.slim(onnx.load(onnx_path)), onnx_path)
+    save_hparams_to_yaml(config_yaml=hparams_path, hparams=trainer.model.hparams)

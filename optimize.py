@@ -7,7 +7,7 @@ import numpy as np
 import optuna
 import torch
 from optuna.integration import PyTorchLightningPruningCallback
-from lightning.pytorch.callbacks import EarlyStopping, BatchSizeFinder, Timer
+from lightning.pytorch.callbacks import EarlyStopping, Timer
 
 from binarize import Preprocessor
 import tempfile
@@ -134,8 +134,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         proc.process_audio()
         proc.save_metadata()
 
-        # batch size will get re-calculated by callback
-        data_module = MinaDataModule(temp_bin_dir, 1, g_workers)
+        data_module = MinaDataModule(temp_bin_dir, 8, g_workers)
         model = MINA(
             d_mel=mels,
             d_l=conv_dim,
@@ -161,7 +160,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
             phoneme_dropout=phoneme_dropout,
             phoneme_map=data_module.phoneme_map,
             vocab_size=data_module.vocab_size,
-            sch_frequency=5,
+            sch_frequency=1,
             loss_weights=(b_loss, p_loss, p_loss),
             hit_tolerance=hit_tolerance,
             num_conv_heads=num_conv_heads,
@@ -177,12 +176,12 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         trainer = lightning.Trainer(
             accelerator="auto",
             devices="auto",
-            callbacks=[early_stop_callback, BatchSizeFinder(mode="binsearch", margin=0.5), Timer(duration="00:02:00:00")],
+            callbacks=[early_stop_callback, Timer(duration="00:03:00:00"), PyTorchLightningPruningCallback(trial, monitor="val/boundary_r")],
             logger=True,
             gradient_clip_val=1.0,
             accumulate_grad_batches=1,
             log_every_n_steps=10,
-            check_val_every_n_epoch=5,
+            check_val_every_n_epoch=1,
             precision='16-mixed',
             max_epochs=epochs,
         )
@@ -191,8 +190,7 @@ def objective(trial: optuna.trial.Trial, data_dir: Path, g_workers: int, c_worke
         trainer.fit(model, data_module)
         temp_dir.cleanup()
 
-        return (trainer.callback_metrics["val/ph_frame_loss"].item() + trainer.callback_metrics["val/ph_seg_loss"].item(),
-                trainer.callback_metrics["val/boundary_r"].item())
+        return trainer.callback_metrics["val/boundary_r"].item()
 
     except RuntimeError as e:
         if "out of memory" in str(e).lower():
@@ -218,9 +216,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     study = optuna.create_study(
-        directions=["minimize", "maximize"],
+        direction='maximize',
+        pruner=optuna.pruners.HyperbandPruner(),
         storage="sqlite:///db.sqlite3",
-        study_name="mina"
+        study_name="mina",
+        load_if_exists=True
     )
 
     study.optimize(
@@ -230,16 +230,11 @@ if __name__ == '__main__':
 
     print("Number of finished trials: {}".format(len(study.trials)))
 
-    print("Best trials:\n")
-    trials = study.best_trials
+    print("Best trial:")
+    trial = study.best_trial
 
-    for trial in trials:
-        print("Trial number: {}".format(trial.number))
-        print("  Value: {}".format(trial.value))
+    print("  Value: {}".format(trial.value))
 
-        print("  Params: ")
-        for key, value in trial.params.items():
-            print("    {}: {}".format(key, value))
-
-        for key, value in trial.user_attrs.items():
-            print("    {}: {}".format(key, value))
+    print("  Params: ")
+    for key, value in trial.params.items():
+        print("    {}: {}".format(key, value))
