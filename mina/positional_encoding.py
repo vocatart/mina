@@ -32,17 +32,19 @@ class SinusoidalPositionalEncoding(nn.Module):
     def __init__(self, pe_dim: int, dropout: float, max_len: int):
         super().__init__()
         self.dropout = nn.Dropout(p=dropout)
+        self.pe_dim = pe_dim
 
-        position = torch.arange(0, max_len).unsqueeze(1)
         div_term = torch.exp(torch.arange(0, pe_dim, 2) * (-math.log(10000.0) / pe_dim))
-
-        pe = torch.zeros(1, max_len, pe_dim)
-        pe[0, :, 0::2] = torch.sin(position * div_term)
-        pe[0, :, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('pe', pe)
+        self.register_buffer('div_term', div_term)
 
     def forward(self, x):
-        x = x + self.pe[:, :x.size(1), :]
+        seq_len = x.size(1)
+        position = torch.arange(seq_len, device=x.device, dtype=x.dtype).unsqueeze(1)
+        pe = torch.zeros(seq_len, self.pe_dim, device=x.device, dtype=x.dtype)
+        div_term = self.div_term.to(dtype=x.dtype)
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+        x = x + pe.unsqueeze(0)
         return self.dropout(x)
 
 class LearnedPositionalEncoding(nn.Module):
@@ -61,17 +63,15 @@ class RotaryPositionalEncoding(nn.Module):
         super().__init__()
 
         inv_freq = 1. / (10000 ** (torch.arange(0, pe_dim, 2).float() / pe_dim))
-        inv_freq = torch.cat((torch.tensor(inv_freq), torch.tensor(inv_freq)), dim=-1)
-        position = torch.arange(max_len).float()
-        sinusoid_inp = torch.outer(position, inv_freq)
-
-        self.register_buffer('cos', sinusoid_inp.cos())
-        self.register_buffer('sin', sinusoid_inp.sin())
+        inv_freq = torch.cat((inv_freq, inv_freq), dim=-1)
+        self.register_buffer('inv_freq', inv_freq)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         seq_len = x.size(-2)
-        cos = self.cos[:seq_len].unsqueeze(0).unsqueeze(0).to(dtype=x.dtype)
-        sin = self.sin[:seq_len].unsqueeze(0).unsqueeze(0).to(dtype=x.dtype)
+        position = torch.arange(seq_len, device=x.device, dtype=self.inv_freq.dtype)
+        sinusoid_inp = torch.outer(position, self.inv_freq)
+        cos = sinusoid_inp.cos().unsqueeze(0).unsqueeze(0).to(dtype=x.dtype)
+        sin = sinusoid_inp.sin().unsqueeze(0).unsqueeze(0).to(dtype=x.dtype)
 
         return (x * cos) + (self.rotate_half(x) * sin)
 

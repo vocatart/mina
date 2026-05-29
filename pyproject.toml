@@ -22,6 +22,8 @@ dependencies = [
     "ray[tune]>=2.55.1",
     "ax-platform>=1.2.4",
     "optuna>=4.8.0",
+    "pyyaml>=6.0.3",
+    "onnxruntime>=1.26.0",
 ]
 
 [tool.uv.sources]
