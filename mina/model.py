@@ -27,7 +27,7 @@ class MINA(lightning.LightningModule):
                  boundary_threshold: float, pe_type: PositionalEncodingType, vocab_size: int,
                  weight_decay: float, warmup_steps: int, sch_frequency: int, do_compile: bool,
                  phoneme_map: dict[int, str], loss_weights: tuple[float, float, float],
-                 hit_tolerance: float, num_conv_heads: int):
+                 hit_tolerance: float, num_conv_heads: int, n_fft: int):
         super().__init__()
         self.save_hyperparameters()
 

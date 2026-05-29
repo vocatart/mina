@@ -93,7 +93,8 @@ if __name__ == '__main__':
         phoneme_map=data_module.phoneme_map,
         loss_weights=(args.b_loss_weight, args.pf_loss_weight, args.ps_loss_weight),
         hit_tolerance=args.hit_tolerance,
-        num_conv_heads=args.num_conv_heads
+        num_conv_heads=args.num_conv_heads,
+        n_fft=data_module.n_fft,
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
