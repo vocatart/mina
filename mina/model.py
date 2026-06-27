@@ -32,7 +32,8 @@ class MINA(lightning.LightningModule):
         self.save_hyperparameters()
 
         self.acoustic = ConvAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv, num_conv_heads)
-        self.temporal = TemporalContextEncoder(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
+        self.boundary_temporal = TemporalContextEncoder(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
+        self.phoneme_temporal = TemporalContextEncoder(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
         self.boundary_classifier = nn.Linear(d_h, 1)
         self.phoneme_classifier = PhonemeClassifier(d_h, vocab_size, phoneme_dropout)
 
@@ -41,17 +42,20 @@ class MINA(lightning.LightningModule):
 
     def forward(self, x: torch.Tensor, padding_mask=None, gt_boundaries=None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         x = self.acoustic(x, padding_mask=padding_mask)
-        x = self.temporal(x, padding_mask=padding_mask)
 
-        boundary_logits = self.boundary_classifier(x).squeeze(-1)
-        phoneme_logits, segment_logits = self.phoneme_classifier(x, padding_mask=padding_mask, gt_boundaries=gt_boundaries)
+        x_b = self.boundary_temporal(x, padding_mask=padding_mask)
+        x_p = self.phoneme_temporal(x, padding_mask=padding_mask)
+
+        boundary_logits = self.boundary_classifier(x_b).squeeze(-1)
+        phoneme_logits, segment_logits = self.phoneme_classifier(x_p, padding_mask=padding_mask, gt_boundaries=gt_boundaries)
 
         return boundary_logits, phoneme_logits, segment_logits
 
     def on_train_start(self):
         if self.hparams.do_compile:
             self.acoustic.compile(dynamic=True)
-            self.temporal.compile(dynamic=True)
+            self.boundary_temporal.compile(dynamic=True)
+            self.phoneme_temporal.compile(dynamic=True)
             self.boundary_classifier.compile(dynamic=True)
             self.phoneme_classifier.compile(dynamic=True)
 
