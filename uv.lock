@@ -1363,7 +1363,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.4.4" },
     { name = "onnx", specifier = ">=1.21.0" },
     { name = "onnxscript", specifier = ">=0.7.0" },
-    { name = "onnxslim", specifier = ">=0.1.91" },
+    { name = "onnxslim", specifier = ">=0.1.94" },
     { name = "optuna", specifier = ">=4.8.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "ray", extras = ["tune"], specifier = ">=2.55.1" },
@@ -1878,7 +1878,7 @@ wheels = [
 
 [[package]]
 name = "onnxslim"
-version = "0.1.91"
+version = "0.1.94"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama" },
@@ -1887,9 +1887,9 @@ dependencies = [
     { name = "packaging" },
     { name = "sympy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6e/75/da4685c96ddf8117872ed05f93a5e5b48b32d9b2994566ebf46bae2ff091/onnxslim-0.1.91.tar.gz", hash = "sha256:3222fcd9a16836a4e7917e1dc55ddf4db492dadca3f469a1fa9226f92c4a2c6e", size = 595498, upload-time = "2026-04-11T16:48:03.481Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/63/70/08f6099dee785ede13d38c36de20347df34f67046fc670f24c65ad741287/onnxslim-0.1.94.tar.gz", hash = "sha256:83a3d428e55a0d1b7db88a4eadf8b1763bc38e8f7e4a48cbe72c5a7bbaf583b3", size = 598083, upload-time = "2026-05-22T01:37:56.937Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/5c/361b2a95d22b657c41ea5014e197ff9c3adc0e99accf411846d000e70785/onnxslim-0.1.91-py3-none-any.whl", hash = "sha256:1fdb23ca56ca3f9d12ff7b9ae1c779184468eaf911baea0930ac254b49c93ac9", size = 237448, upload-time = "2026-04-11T16:48:02.236Z" },
+    { url = "https://files.pythonhosted.org/packages/93/42/749b09a43bb21542097071ed43cc7c129a62d535ff5166b9ed53c01ac9cb/onnxslim-0.1.94-py3-none-any.whl", hash = "sha256:1ec3f828cad98ff4fc92d06c6eb243e16c0e314728d88ea0bc1f6da19f250522", size = 238391, upload-time = "2026-05-22T01:37:55.056Z" },
 ]
 
 [[package]]
