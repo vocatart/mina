@@ -15,7 +15,7 @@ dependencies = [
     "tempdir>=0.7.1",
     "muon-optimizer",
     "pytest>=9.0.3",
-    "onnx>=1.21.0",
+    "onnx>=1.22.0",
     "onnxslim>=0.1.94",
     "onnxscript>=0.7.0",
     "rich>=15.0.0",
