@@ -11,7 +11,7 @@ dependencies = [
     "tqdm>=4.70.0",
     "lightning==2.6.5",
     "matplotlib>=3.10.8",
-    "tensorboard>=2.20.0",
+    "tensorboard>=2.21.0",
     "tempdir>=0.7.1",
     "muon-optimizer",
     "pytest>=9.1.1",
