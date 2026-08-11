@@ -16,7 +16,7 @@ dependencies = [
     "muon-optimizer",
     "pytest>=9.1.1",
     "onnx>=1.22.0",
-    "onnxslim>=0.1.94",
+    "onnxslim>=0.1.95",
     "onnxscript>=0.7.1",
     "rich>=15.0.0",
     "ray[tune]>=2.56.1",
