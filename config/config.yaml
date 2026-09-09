@@ -1,0 +1,49 @@
+core:
+  raw_data_dir: "./raw"
+  bin_data_dir: "./bin"
+  sample_rate: 8000
+  mel_dim: 128
+  n_fft: 1024
+
+# preprocessing
+bin:
+  time_split: 10
+  val_split: 0.1
+  audio_types: ["flac", "wav"]
+  workers: 16
+
+# model hparams
+model:
+  latent_dim: 256
+  hidden_dim: 128
+  num_conv_layers: 3
+  num_conv_heads: 4
+  num_phoneme_heads: 4
+  num_boundary_heads: 4
+  num_phoneme_layers: 3
+  num_boundary_layers: 3
+  phoneme_feedforward_dim: 768
+  boundary_feedforward_dim: 768
+  conv_dropout: 0.3
+  phoneme_dropout: 0.1
+  boundary_dropout: 0.1
+  phoneme_classifier_dropout: 0.45
+  kernel_size: 5
+  pe_type: "rope"
+
+# training hparams
+train:
+  muon_lr: 2.9e-3
+  adam_lr: 4.8e-4
+  weight_decay: 4.4e-3
+  epochs: 1000
+  pos_weight: 1.01
+  warmup_steps: 100
+  val_n_epochs: 5
+  boundary_loss_weight: 2.63
+  phoneme_frame_loss_weight: 0.55
+  phoneme_segment_loss_weight: 0.55
+  hit_tolerance: 2
+  batch_size: 16
+  workers: 4
+  boundary_threshold: 0.5

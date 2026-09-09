@@ -11,6 +11,7 @@ import argparse
 from lightning.pytorch.callbacks import ModelCheckpoint, EarlyStopping, RichModelSummary, BatchSizeFinder
 from lightning.pytorch.loggers import TensorBoardLogger
 from lightning.pytorch.core.saving import save_hparams_to_yaml
+from omegaconf import OmegaConf
 
 from mina.dataset import MinaDataModule
 from mina.model import MINA
@@ -21,79 +22,46 @@ if __name__ == '__main__':
     torch._dynamo.config.capture_scalar_outputs = True
     torch.set_float32_matmul_precision('medium')
 
-    parser = argparse.ArgumentParser()
+    config = OmegaConf.load("config/config.yaml")
+    cli = OmegaConf.from_cli()
+    cfg = OmegaConf.merge(config, cli)
 
-    parser.add_argument("data_dir", type=str)
+    bin_data = Path(cfg.core.bin_data_dir)
+    lightning.seed_everything(72)
 
-    parser.add_argument("--batch_size", type=int, default=None)
-    parser.add_argument("--num_workers", type=int, default=4)
-
-    parser.add_argument("--conv_dim", type=int, default=256) # d_l
-    parser.add_argument("--latent_dim", type=int, default=128) # d_h
-    parser.add_argument("--num_conv", type=int, default=3)
-    parser.add_argument("--num_heads", type=int, default=4)
-    parser.add_argument("--num_conv_heads", type=int, default=2)
-    parser.add_argument("--tf_layers", type=int, default=3)
-    parser.add_argument("--tf_dim_ff", type=int, default=768)
-    parser.add_argument("--kernel_size", type=int, default=5)
-    parser.add_argument("--conv_dropout", type=float, default=0.3)
-    parser.add_argument("--transformer_dropout", type=float, default=0.1)
-    parser.add_argument("--thresh", type=float, default=0.5)
-    parser.add_argument(
-        "--pe_type",
-        type=PositionalEncodingType,
-        choices=["sinusoidal", "learned", "rope"],
-        default=PositionalEncodingType.ROPE,
-    )
-
-    parser.add_argument("--lr_muon", type=float, default=2.9e-3)
-    parser.add_argument("--lr_adam", type=float, default=4.8e-4)
-    parser.add_argument("--weight_decay", type=float, default=4.4e-3)
-    parser.add_argument("--num_epochs", type=int, default=1000)
-    parser.add_argument("--pos_weight", type=float, default=1.01)
-    parser.add_argument("--warmup_steps", type=int, default=100)
-    parser.add_argument("--val_n_epochs", type=int, default=5)
-    parser.add_argument("--no_compile", action="store_false")
-    parser.add_argument("--b_loss_weight", type=float, default=2.63)
-    parser.add_argument("--pf_loss_weight", type=float, default=0.55)
-    parser.add_argument("--ps_loss_weight", type=float, default=0.55)
-    parser.add_argument("--phoneme_dropout", type=float, default=0.45)
-    parser.add_argument("--hit_tolerance", type=int, default=2)
-
-    args = parser.parse_args()
-    bin_data = Path(args.data_dir)
-    lightning.seed_everything(76_805)
-
-    data_module = MinaDataModule(bin_data, args.batch_size if args.batch_size is not None else 1, args.num_workers)
+    data_module = MinaDataModule(bin_data, cfg.train.batch_size if cfg.train.batch_size is not None else 1, cfg.train.workers)
     model = MINA(
-        mel_dim=data_module.n_mels,
-        latent_dim=args.conv_dim,
-        hidden_dim=args.latent_dim,
-        num_conv_layers=args.num_conv,
-        num_phoneme_heads=args.num_heads,
-        num_phoneme_layers=args.tf_layers,
-        phoneme_feedforward_dim=args.tf_dim_ff,
-        kernel_size=args.kernel_size,
-        conv_dropout=args.conv_dropout,
-        phoneme_dropout=args.transformer_dropout,
-        muon_lr=args.lr_muon,
-        adam_lr=args.lr_adam,
-        weight_decay=args.weight_decay,
-        pos_weight=args.pos_weight,
+        mel_dim=cfg.model.mel_dim,
+        latent_dim=cfg.model.latent_dim,
+        hidden_dim=cfg.model.hidden_dim,
+        num_conv_layers=cfg.model.num_conv_layers,
+        num_phoneme_layers=cfg.model.num_phoneme_layers,
+        num_boundary_layers=cfg.model.num_boundary_layers,
+        num_conv_heads=cfg.model.num_conv_heads,
+        num_phoneme_heads=cfg.model.num_phoneme_heads,
+        num_boundary_heads=cfg.model.num_boundary_heads,
+        phoneme_feedforward_dim=cfg.model.phoneme_feedforward_dim,
+        boundary_feedforward_dim=cfg.model.boundary_feedforward_dim,
+        conv_dropout=cfg.model.conv_dropout,
+        phoneme_dropout=cfg.model.phoneme_dropout,
+        boundary_dropout=cfg.model.boundary_dropout,
+        phoneme_classifier_dropout=cfg.model.phoneme_classifier_dropout,
+        kernel_size=cfg.model.kernel_size,
         max_len=data_module.rec_max_len,
-        sr=data_module.sr,
-        hop_length=data_module.hop_length,
-        boundary_threshold=args.thresh,
-        pe_type=args.pe_type,
-        warmup_steps=args.warmup_steps,
-        sch_frequency=args.val_n_epochs,
-        do_compile=args.no_compile,
+        sr=cfg.core.sample_rate,
+        hop_length=cfg.core.n_fft // 4,
+        muon_lr=cfg.train.muon_lr,
+        adam_lr=cfg.train.adam_lr,
+        pos_weight=cfg.train.pos_weight,
+        boundary_threshold=cfg.train.boundary_threshold,
+        pe_type=cfg.train.pe_type,
         vocab_size=data_module.vocab_size,
-        phoneme_classifier_dropout=args.phoneme_dropout,
+        weight_decay=cfg.train.weight_decay,
+        warmup_steps=cfg.train.warmup_steps,
+        sch_frequency=cfg.train.val_n_epochs,
+        hit_tolerance=cfg.train.hit_tolerance,
         phoneme_map=data_module.phoneme_map,
-        loss_weights=(args.b_loss_weight, args.pf_loss_weight, args.ps_loss_weight),
-        hit_tolerance=args.hit_tolerance,
-        num_conv_heads=args.num_conv_heads
+        loss_weights=(cfg.train.boundary_loss_weight, cfg.train.phoneme_frame_loss_weight, cfg.train.phoneme_segment_loss_weight),
     )
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
@@ -117,11 +85,11 @@ if __name__ == '__main__':
 
     callbacks: list[Any] = [checkpoint_callback, early_stop_callback, RichModelSummary(max_depth=1)]
 
-    if args.batch_size is None:
+    if cfg.train.batch_size is None:
         callbacks.append(BatchSizeFinder(mode="binsearch", margin=0.6))
 
     trainer = lightning.Trainer(
-        max_epochs=args.num_epochs,
+        max_epochs=cfg.train.epochs,
         accelerator="auto",
         devices="auto",
         callbacks=callbacks,

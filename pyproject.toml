@@ -16,6 +16,7 @@ dependencies = [
     "optuna==5.0.0",
     "lightning-utilities>=0.15.3",
     "onnxslim>=0.1.96",
+    "omegaconf>=2.3.1",
 ]
 
 [tool.uv.sources]
