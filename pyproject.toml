@@ -5,7 +5,7 @@ description = "Mel Inter-phoneme Neural Alignment"
 requires-python = ">=3.13"
 dependencies = [
     "librosa>=1.0.0",
-    "torch>=2.13.0",
+    "torch>=2.14.0",
     "numpy>=2.5.2",
     "textgrid>=1.6.1",
     "tqdm>=4.70.0",
