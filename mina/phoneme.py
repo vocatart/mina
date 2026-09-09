@@ -1,11 +1,32 @@
 import torch
 from torch import nn
 
+from mina.positional_encoding import PositionalEncodingType
+from mina.temporal import TemporalContextEncoder
+
 
 class PhonemeClassifier(nn.Module):
-    def __init__(self, hidden_dim: int, vocab_size: int, dropout: float) -> None:
+    def __init__(self,
+                 hidden_dim: int,
+                 vocab_size: int,
+                 dropout: float,
+                 temporal_heads: int,
+                 temporal_layers: int,
+                 temporal_feedforward_dim: int,
+                 temporal_dropout: float,
+                 max_len: int,
+                 pe_type: PositionalEncodingType) -> None:
+
         super().__init__()
-        self.hidden_dim = hidden_dim
+        self.temporal = TemporalContextEncoder(
+            hidden_dim,
+            temporal_heads,
+            temporal_layers,
+            temporal_feedforward_dim,
+            temporal_dropout,
+            max_len,
+            pe_type
+        )
 
         # frame & seg
         self.hidden_projection = nn.Linear(hidden_dim, hidden_dim)
@@ -23,6 +44,8 @@ class PhonemeClassifier(nn.Module):
 
     def forward(self, x: torch.Tensor, gt_boundaries: torch.Tensor | None = None,
                 padding_mask: torch.Tensor | None = None):
+
+        x = self.temporal(x, padding_mask=padding_mask)
 
         # (B, T, d_h)
         x = self.hidden_projection(x)
@@ -60,7 +83,6 @@ class PhonemeClassifier(nn.Module):
             attn_bias = attn_bias.masked_fill(padding_mask.unsqueeze(1), float('-inf'))
 
         attn = torch.nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=attn_bias, dropout_p=dropout_p)
-
         seg_logits = self.seg_out(attn)
 
         return frame_logits, seg_logits

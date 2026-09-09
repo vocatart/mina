@@ -13,6 +13,7 @@ from mina.acoustic import ConvAcousticEncoder
 import matplotlib
 import matplotlib.pyplot as plt
 
+from mina.boundary import BoundaryClassifier
 from mina.phoneme import PhonemeClassifier
 from mina.positional_encoding import PositionalEncodingType
 from mina.temporal import TemporalContextEncoder
@@ -20,44 +21,84 @@ from mina.temporal import TemporalContextEncoder
 EPSILON = 1e-8
 
 class MINA(lightning.LightningModule):
-    def __init__(self, d_mel: int, d_l: int, d_h: int, conv_layers: int,
-                 num_heads: int, tf_layers: int, tf_dim_ff: int, dropout_conv: float,
-                 dropout_tf: float, kernel_size: int, max_len: int, sr: int, phoneme_dropout: float,
-                 hop_length: int, muon_lr: float, adam_lr: float, pos_weight: float,
-                 boundary_threshold: float, pe_type: PositionalEncodingType, vocab_size: int,
-                 weight_decay: float, warmup_steps: int, sch_frequency: int, do_compile: bool,
-                 phoneme_map: dict[int, str], loss_weights: tuple[float, float, float],
-                 hit_tolerance: float, num_conv_heads: int):
+    def __init__(self,
+                 mel_dim: int,
+                 latent_dim: int,
+                 hidden_dim: int,
+                 num_conv_layers: int,
+                 num_conv_heads: int,
+                 num_phoneme_heads: int,
+                 num_boundary_heads: int,
+                 num_phoneme_layers: int,
+                 num_boundary_layers: int,
+                 phoneme_feedforward_dim: int,
+                 boundary_feedforward_dim: int,
+                 conv_dropout: float,
+                 phoneme_dropout: float,
+                 boundary_dropout: float,
+                 kernel_size: int,
+                 max_len: int,
+                 sr: int,
+                 phoneme_classifier_dropout: float,
+                 hop_length: int,
+                 muon_lr: float,
+                 adam_lr: float,
+                 pos_weight: float,
+                 boundary_threshold: float,
+                 pe_type: PositionalEncodingType,
+                 vocab_size: int,
+                 weight_decay: float,
+                 warmup_steps: int,
+                 sch_frequency: int,
+                 phoneme_map: dict[int, str],
+                 loss_weights: tuple[float, float, float],
+                 hit_tolerance: float):
+
         super().__init__()
         self.save_hyperparameters()
 
-        self.acoustic = ConvAcousticEncoder(d_mel, d_l, d_h, conv_layers, kernel_size, dropout_conv, num_conv_heads)
-        self.boundary_temporal = TemporalContextEncoder(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
-        self.phoneme_temporal = TemporalContextEncoder(d_h, num_heads, tf_layers, tf_dim_ff, dropout_tf, max_len, pe_type)
-        self.boundary_classifier = nn.Linear(d_h, 1)
-        self.phoneme_classifier = PhonemeClassifier(d_h, vocab_size, phoneme_dropout)
+        self.acoustic = ConvAcousticEncoder(
+            mel_dim,
+            latent_dim,
+            hidden_dim,
+            num_conv_layers,
+            kernel_size,
+            conv_dropout,
+            num_conv_heads
+        )
 
-        self.example_input_array = torch.randn(1, max_len, d_mel)
+        self.boundary_classifier = BoundaryClassifier(
+            hidden_dim,
+            num_boundary_heads,
+            num_boundary_layers,
+            boundary_feedforward_dim,
+            boundary_dropout,
+            max_len,
+            pe_type
+        )
+
+        self.phoneme_classifier = PhonemeClassifier(
+            hidden_dim,
+            vocab_size,
+            phoneme_classifier_dropout,
+            num_phoneme_heads,
+            num_phoneme_layers,
+            phoneme_feedforward_dim,
+            phoneme_dropout,
+            max_len,
+            pe_type
+        )
+
+        self.example_input_array = torch.randn(1, max_len, mel_dim)
 
 
     def forward(self, x: torch.Tensor, padding_mask=None, gt_boundaries=None) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         x = self.acoustic(x, padding_mask=padding_mask)
 
-        x_b = self.boundary_temporal(x, padding_mask=padding_mask)
-        x_p = self.phoneme_temporal(x, padding_mask=padding_mask)
-
-        boundary_logits = self.boundary_classifier(x_b).squeeze(-1)
-        phoneme_logits, segment_logits = self.phoneme_classifier(x_p, padding_mask=padding_mask, gt_boundaries=gt_boundaries)
+        boundary_logits = self.boundary_classifier(x)
+        phoneme_logits, segment_logits = self.phoneme_classifier(x, padding_mask=padding_mask, gt_boundaries=gt_boundaries)
 
         return boundary_logits, phoneme_logits, segment_logits
-
-    def on_train_start(self):
-        if self.hparams.do_compile:
-            self.acoustic.compile(dynamic=True)
-            self.boundary_temporal.compile(dynamic=True)
-            self.phoneme_temporal.compile(dynamic=True)
-            self.boundary_classifier.compile(dynamic=True)
-            self.phoneme_classifier.compile(dynamic=True)
 
     @staticmethod
     def _make_padding_mask(lengths: torch.Tensor, max_len: int) -> torch.Tensor:
