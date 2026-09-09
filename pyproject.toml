@@ -4,24 +4,18 @@ version = "0.0.1"
 description = "Mel Inter-phoneme Neural Alignment"
 requires-python = ">=3.13"
 dependencies = [
-    "librosa>=0.11.0",
-    "torch>=2.11.0",
-    "numpy>=2.4.4",
-    "textgrid>=1.6.1",
-    "tqdm>=4.67.3",
-    "lightning==2.6.1",
-    "matplotlib>=3.10.8",
-    "tensorboard>=2.20.0",
-    "tempdir>=0.7.1",
+    "librosa==1.0.0",
+    "torch==2.14.0",
+    "numpy==2.5.3",
+    "textgrid==1.6.1",
+    "tqdm==4.70.0",
+    "lightning==2.6.5",
+    "matplotlib==3.11.1",
     "muon-optimizer",
-    "pytest>=9.0.3",
-    "onnx>=1.21.0",
-    "onnxslim>=0.1.91",
-    "onnxscript>=0.7.0",
-    "rich>=15.0.0",
-    "ray[tune]>=2.55.1",
-    "ax-platform>=1.2.4",
-    "optuna>=4.8.0",
+    "onnx==1.22.0",
+    "optuna==5.0.0",
+    "lightning-utilities>=0.15.3",
+    "onnxslim>=0.1.96",
 ]
 
 [tool.uv.sources]
