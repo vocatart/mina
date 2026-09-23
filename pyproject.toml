@@ -8,7 +8,7 @@ dependencies = [
     "torch>=2.14.0",
     "numpy>=2.5.3",
     "textgrid>=1.6.1",
-    "tqdm>=4.70.0",
+    "tqdm>=4.70.1",
     "lightning==2.6.6",
     "matplotlib>=3.11.1",
     "tensorboard>=2.21.0",
