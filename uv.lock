@@ -240,10 +240,10 @@ dependencies = [
     { name = "pyre-extensions" },
     { name = "scipy" },
     { name = "threadpoolctl" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
-    { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
     { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/af/65/ac1539542d183f5d69ded6d134c60cd77ad5d9657ff1c35e54bf140984b3/botorch-0.18.1.tar.gz", hash = "sha256:f3e444efae2622b3ad88a5efe1859583ba2cd0913761f76677a189b2fd1aee99", size = 5090211, upload-time = "2026-06-08T22:45:15.659Z" }
@@ -1060,10 +1060,10 @@ dependencies = [
     { name = "packaging" },
     { name = "pytorch-lightning" },
     { name = "pyyaml" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
-    { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
     { name = "torchmetrics" },
     { name = "tqdm" },
     { name = "typing-extensions" },
@@ -1092,10 +1092,10 @@ version = "0.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "scipy" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
-    { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/02/1a/0d6d0269cf7327e31a2fe80b274d5bf5001dc4462acbef26240da6ac5dfe/linear_operator-0.6.1.tar.gz", hash = "sha256:3fba49a8080d16f822a5d870f462279cd6afbcf4ed670f4511b38fad96f61831", size = 181898, upload-time = "2026-02-27T23:43:18.716Z" }
 wheels = [
@@ -1304,10 +1304,10 @@ dependencies = [
     { name = "tempdir" },
     { name = "tensorboard" },
     { name = "textgrid" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
-    { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
     { name = "tqdm" },
 ]
 
@@ -1329,9 +1329,9 @@ requires-dist = [
     { name = "tempdir", specifier = ">=0.7.1" },
     { name = "tensorboard", specifier = ">=2.21.0" },
     { name = "textgrid", specifier = ">=1.6.1" },
-    { name = "torch", marker = "sys_platform != 'darwin' and sys_platform != 'linux'", specifier = ">=2.14.0" },
-    { name = "torch", marker = "sys_platform == 'darwin'", specifier = ">=2.14.0", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.14.0", index = "https://download.pytorch.org/whl/cu130" },
+    { name = "torch", marker = "sys_platform != 'darwin' and sys_platform != 'linux'", specifier = ">=2.14.1" },
+    { name = "torch", marker = "sys_platform == 'darwin'", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.14.1", index = "https://download.pytorch.org/whl/cu130" },
     { name = "tqdm", specifier = ">=4.70.1" },
 ]
 
@@ -2469,10 +2469,10 @@ dependencies = [
     { name = "lightning-utilities" },
     { name = "packaging" },
     { name = "pyyaml" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
-    { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
     { name = "torchmetrics" },
     { name = "tqdm" },
     { name = "typing-extensions" },
@@ -2939,7 +2939,7 @@ wheels = [
 
 [[package]]
 name = "torch"
-version = "2.14.0"
+version = "2.14.1"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
     "python_full_version >= '3.14' and platform_machine != 's390x' and sys_platform == 'darwin'",
@@ -2955,16 +2955,16 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 wheels = [
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:caf6359d64c0074bcb9f8641a169239118c8165a0a0fef79110c72bfd6474bec", upload-time = "2026-09-02T00:26:15Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:d0f78744000a7863cc3f1eafaf511d4b9944f079f08277de6fefe4b01f4d41b9", upload-time = "2026-09-02T00:26:19Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp314-cp314t-macosx_14_0_arm64.whl", hash = "sha256:dd4c297f1af83ad44368ffdaa9ed0318984567ff952bbda3d90cc300afe1e8a0", upload-time = "2026-09-02T00:26:23Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp315-cp315-macosx_14_0_arm64.whl", hash = "sha256:c65f7d7783e76272bbd53e4220aa029ac14e2dc346c6641691e041202a03b0e0", upload-time = "2026-09-02T00:26:27Z" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.0-cp315-cp315t-macosx_14_0_arm64.whl", hash = "sha256:879140333148a3a5b1a14ab29a35b58c3c8db4d85c7130018a79178eb239008b", upload-time = "2026-09-02T00:26:30Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1-cp313-cp313-macosx_14_0_arm64.whl", hash = "sha256:82762c7527079f1e17a771684362ed51400e3bc72942df30217e40f27c6816d7", upload-time = "2026-09-30T19:50:39Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:17b32fd68abe9429d936c643579e24465e7174a06c168bbfcc01395a881bc8af", upload-time = "2026-09-30T19:50:45Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1-cp314-cp314t-macosx_14_0_arm64.whl", hash = "sha256:6fe25964e53113a8a1f5640be1103a982a426c07f8907fba48fcca1be1112202", upload-time = "2026-09-30T19:50:51Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1-cp315-cp315-macosx_14_0_arm64.whl", hash = "sha256:729992e6b581de722989012547b7767ef8ac019bd060e34805f06a52ff9a120e", upload-time = "2026-09-30T19:50:56Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1-cp315-cp315t-macosx_14_0_arm64.whl", hash = "sha256:3e4d7679866c4cd68258ccda7c51bcda150797eda095813f26fe63c07934cc21", upload-time = "2026-09-30T19:51:02Z" },
 ]
 
 [[package]]
 name = "torch"
-version = "2.14.0"
+version = "2.14.1"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.14' and platform_machine != 's390x' and sys_platform != 'darwin' and sys_platform != 'linux' and sys_platform != 'win32'",
@@ -2986,14 +2986,14 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/a8/683d9c44737554b67ca76dd2db4f42258a0f014246cb511293e51e0154bd/torch-2.14.0-cp313-cp313-win_amd64.whl", hash = "sha256:0e7cf18cb0d8bd666b6120932e29c7aef3502b61a08b44da4839580c539a7cdb", size = 124113865, upload-time = "2026-09-02T13:44:33.705Z" },
-    { url = "https://files.pythonhosted.org/packages/9a/1e/a5475c00b0555e686333e6b4036f2213e7cbea021a772ce6f9ced4dcbd2f/torch-2.14.0-cp314-cp314-win_amd64.whl", hash = "sha256:44b044b9f6f633d982839422a57433d6a1da520037fd88e0c8a47efde589b3b8", size = 124110863, upload-time = "2026-09-02T13:45:12.764Z" },
-    { url = "https://files.pythonhosted.org/packages/f8/c3/72ae1f02747b1f012e1975743e48cd608f83095d7f9ce58de78b79248b35/torch-2.14.0-cp314-cp314t-win_amd64.whl", hash = "sha256:731784e3914843c6bcc7aba3987ff7610ac57dbbc816a5d6b9b62e04c240a641", size = 124400194, upload-time = "2026-09-02T13:45:53.555Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/4b/32c00cacbe682a4c08d9c6c3e7a7116c912184cc7155f06c64f545db97d1/torch-2.14.1-cp313-cp313-win_amd64.whl", hash = "sha256:711713391d26a1ce5e9fbc6c996d954a8c12e8825374cc77b809a6af29539b8c", size = 124113754, upload-time = "2026-09-30T17:52:33.474Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/dc/a36a4431ab5e3ad168a75f341e24677a4bbbf0c5dda59c97a7079262bb94/torch-2.14.1-cp314-cp314-win_amd64.whl", hash = "sha256:d02a4c48a2ca5fb7654e36e71f710f74494d83f1f10aaff8e059dd554adca956", size = 124110781, upload-time = "2026-09-30T17:53:31.141Z" },
+    { url = "https://files.pythonhosted.org/packages/45/05/451a69a4287033d8f106f5c65f92c2c0c37229d81ea101d4b047caf758cc/torch-2.14.1-cp314-cp314t-win_amd64.whl", hash = "sha256:e07306caa1de2a4ac1467e11ecfc92fc44f523dd6a521145039aef46d913963c", size = 124400129, upload-time = "2026-09-30T17:54:12.306Z" },
 ]
 
 [[package]]
 name = "torch"
-version = "2.14.0+cpu"
+version = "2.14.1+cpu"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
     "python_full_version >= '3.14' and platform_machine == 's390x' and sys_platform == 'darwin'",
@@ -3011,7 +3011,7 @@ dependencies = [
 
 [[package]]
 name = "torch"
-version = "2.14.0+cu130"
+version = "2.14.1+cu130"
 source = { registry = "https://download.pytorch.org/whl/cu130" }
 resolution-markers = [
     "python_full_version >= '3.14' and platform_machine != 's390x' and sys_platform == 'linux'",
@@ -3036,16 +3036,16 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 wheels = [
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:20ec4bb8944a847dee60e6d5536b415670dd5403342f36dbe08a6be5bf582e08", upload-time = "2026-09-02T18:52:41Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:745010695e0458d6f28accb697b5371b6fd245aa8696530165f972cd126bbd8d", upload-time = "2026-09-02T18:52:56Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:9af4e8f3933c3d515d1949befad551262cdb3f195cbbdb4674369585c55ec342", upload-time = "2026-09-02T18:54:18Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:12b09f9e9f91347596393a6ddb95e9bc0aa003227eb6c7cd7f20c144eac62442", upload-time = "2026-09-02T18:54:33Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:6c6f734dc5bd126316a9e6320cff848b0e21afc1702118dd504fa45512c0d2d5", upload-time = "2026-09-02T18:55:47Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:9a5dfdca3375869ae89803ae79d44531b706af9352a77066b8bdf134de0e09d4", upload-time = "2026-09-02T18:56:03Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp315-cp315-manylinux_2_28_aarch64.whl", hash = "sha256:b82c5857f2c397a285027b65093dc8c89c7b45a69535786a69dae462bf67fd07", upload-time = "2026-09-02T18:57:13Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp315-cp315-manylinux_2_28_x86_64.whl", hash = "sha256:9e91cca5c03701158d783fb91fc1c5651469f466a3a3bcb4df5bcbff36cfd371", upload-time = "2026-09-02T18:57:26Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp315-cp315t-manylinux_2_28_aarch64.whl", hash = "sha256:16171adcc338c0827fbc28e448b96071638f4733743ee144b9692ec43477d821", upload-time = "2026-09-02T18:58:34Z" },
-    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.0%2Bcu130-cp315-cp315t-manylinux_2_28_x86_64.whl", hash = "sha256:9e68cd6d619325acf1d94fc0c0a819e7a19dd95d226744be20acf7b7aff3ac8a", upload-time = "2026-09-02T18:58:46Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:36d7d3065e072a8b190460327bc68afd0f91592af2433f65bd5dd7d86738f38d", upload-time = "2026-09-30T20:26:24Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:3a78ea0a4d6605c1e351b33ab8aabe44ddb815239cec00cc6f85555d26c0a5a5", upload-time = "2026-09-30T20:26:48Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:8d614da5333b9ea187589a53874c5bc687d893df86fb2a7b9ebdfeacd62b45f7", upload-time = "2026-09-30T20:28:58Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:5206fa83163aa71dc0186637b2aa2ec3fb7114892039fdde3c91bf570bd23ba8", upload-time = "2026-09-30T20:29:22Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:0a6ff5419345f79bb79a5fd7b33e01b846135ef63b901c8233289d07a88bd839", upload-time = "2026-09-30T20:31:38Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:f143ff078be3bfd41579a4557a1ebcf01506f8223fad3ac68ce7bb6e88f96a12", upload-time = "2026-09-30T20:32:06Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp315-cp315-manylinux_2_28_aarch64.whl", hash = "sha256:3798773468aa14f5a889cd1b5a8790e5d363ab51d5b5b8ba4803a099c9c0ab2d", upload-time = "2026-09-30T20:34:26Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp315-cp315-manylinux_2_28_x86_64.whl", hash = "sha256:9d8f7d2b1bad5c3da6dae63af6904c52996ccb9720a04b59a9d508c3fdc9d864", upload-time = "2026-09-30T20:34:51Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp315-cp315t-manylinux_2_28_aarch64.whl", hash = "sha256:d4079b327a96c256b0882ed421338be6f6dc39d6a974e47d4d4986d6f8f71966", upload-time = "2026-09-30T20:36:57Z" },
+    { url = "https://download-r2.pytorch.org/whl/cu130/torch-2.14.1%2Bcu130-cp315-cp315t-manylinux_2_28_x86_64.whl", hash = "sha256:51d68598745b384e4c84d4731ed650f3bfd5e8368368d396ba457c64ce35df9e", upload-time = "2026-09-30T20:37:22Z" },
 ]
 
 [[package]]
@@ -3056,10 +3056,10 @@ dependencies = [
     { name = "lightning-utilities" },
     { name = "numpy" },
     { name = "packaging" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
-    { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
-    { name = "torch", version = "2.14.0+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine != 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'darwin' and sys_platform != 'linux'" },
+    { name = "torch", version = "2.14.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "platform_machine == 's390x' and sys_platform == 'darwin'" },
+    { name = "torch", version = "2.14.1+cu130", source = { registry = "https://download.pytorch.org/whl/cu130" }, marker = "sys_platform == 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/81/34/39b8b749333db56c0585d7a11fa62a283c087bb1dfc897d69fb8cedbefb1/torchmetrics-1.9.0.tar.gz", hash = "sha256:a488609948600df52d3db4fcdab02e62aab2a85ef34da67037dc3e65b8512faa", size = 581765, upload-time = "2026-03-09T17:41:22.443Z" }
 wheels = [
